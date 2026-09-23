@@ -48,3 +48,4 @@ android/key.properties
 # misc
 tsconfig.tsbuildinfo
 .vly-run/
+isolate/
