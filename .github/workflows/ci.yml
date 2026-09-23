@@ -14,19 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: bun install --frozen-lockfile
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: bun run typecheck
 
       - name: Build web app
-        run: npm run build
+        run: bun run build
         env:
           # Build-time placeholder; the real value lives in deployment env config.
           DATABASE_URL: postgresql://build-placeholder

@@ -41,11 +41,13 @@ Otherwise hosting's Git integration deploys automatically on push to `main`.
 - **Never commit** keystore files or passwords. Signing material travels only
   through GitHub Actions Secrets (below).
 
-Connect the remote when ready (the user supplies the GitHub repo):
-```bash
-git remote add origin git@github.com:<org>/<repo>.git
-git push -u origin main
-```
+Connected: **github.com/MehulBlitz/civiclens-triage** (private). Pushes use a
+repo-scoped PAT exposed to the app as `GITHUB_TOKEN` (Keys/Environment) via
+`sh ./scripts/github-connect.sh` — re-run it any time to push new work.
+
+All CI workflows install with **Bun** (`oven-sh/setup-bun` +
+`bun install --frozen-lockfile`) to match `bun.lock`; npm cache/ci steps were
+removed because no `package-lock.json` exists.
 
 ---
 
