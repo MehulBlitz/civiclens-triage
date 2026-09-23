@@ -29,16 +29,20 @@ jobs:
           echo '<!doctype html><html><head><meta charset="utf-8"><title>CivicLens</title></head><body style="background:#081c2a;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="/" style="color:#f59e0b">CivicLens — open dashboard</a></body></html>' > mobile/www/index.html
           bunx cap sync ios
 
-      - name: Install CocoaPods deps (if needed)
+      # This Capacitor 8 shell uses Swift Package Manager (CapApp-SPM),
+      # not CocoaPods: xcodebuild resolves packages from the .xcodeproj.
+      - name: Resolve SPM packages
         run: |
-          if [ -d "ios/App/Pods" ]; then echo "Pods present"; else pod install --project-directory=ios/App; fi
+          cd ios/App
+          xcodebuild -project App.xcodeproj -scheme App \
+            -resolvePackageDependencies
 
       # Unsigned archive → IPA sideloadable via Xcode/devices with a
       # development identity. No Apple credentials required for this job.
       - name: Archive (unsigned)
         run: |
           cd ios/App
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
             archive CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""
 
@@ -103,7 +107,7 @@ jobs:
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "iOS signing secrets not configured — skipping signed IPA job."
+            echo "iOS signing secrets not configured — skipping signed IPA steps."
           fi
 
       - name: Decode signing certificate
@@ -138,9 +142,11 @@ jobs:
           echo '<!doctype html><html><head><meta charset="utf-8"><title>CivicLens</title></head><body style="background:#081c2a;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="/" style="color:#f59e0b">CivicLens — open dashboard</a></body></html>' > mobile/www/index.html
           bunx cap sync ios
 
-      - name: Pod install
+      - name: Resolve SPM packages
         if: steps.secrets.outputs.available == 'true'
-        run: pod install --project-directory=ios/App
+        run: |
+          cd ios/App
+          xcodebuild -project App.xcodeproj -scheme App -resolvePackageDependencies
 
       - name: Archive (signed, manual profile)
         if: steps.secrets.outputs.available == 'true'
@@ -148,7 +154,7 @@ jobs:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
           cd ios/App
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/App-signed.xcarchive \
             archive CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID"
