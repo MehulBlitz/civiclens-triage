@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build web app
+        run: npm run build
+        env:
+          # Build-time placeholder; the real value lives in deployment env config.
+          DATABASE_URL: postgresql://build-placeholder
+
+      - name: Upload web build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: |
+            .next/BUILD_ID
+            .next/build-manifest.json
+          if-no-files-found: ignore
+          retention-days: 7

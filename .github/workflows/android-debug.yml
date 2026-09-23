@@ -1,0 +1,50 @@
+name: Android Debug APK (no signing secrets)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "android/**"
+      - "capacitor.config.ts"
+
+jobs:
+  build-debug:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Export web shell + sync Capacitor
+        run: |
+          mkdir -p mobile/www
+          echo '<!doctype html><html><head><meta charset="utf-8"><title>CivicLens</title></head><body style="background:#081c2a;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="/" style="color:#f59e0b">CivicLens — open dashboard</a></body></html>' > mobile/www/index.html
+          npx cap sync android
+
+      - name: Assemble debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: civiclens-android-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14

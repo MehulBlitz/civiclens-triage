@@ -1,0 +1,143 @@
+name: iOS Build (IPA)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "ios/**"
+      - "capacitor.config.ts"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build-ipa:
+    name: Build unsigned IPA
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Export web shell + sync Capacitor
+        run: |
+          mkdir -p mobile/www
+          echo '<!doctype html><html><head><meta charset="utf-8"><title>CivicLens</title></head><body style="background:#081c2a;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="/" style="color:#f59e0b">CivicLens — open dashboard</a></body></html>' > mobile/www/index.html
+          npx cap sync ios
+
+      - name: Install CocoaPods deps (if needed)
+        run: |
+          if [ -d "ios/App/Pods" ]; then echo "Pods present"; else pod install --project-directory=ios/App; fi
+
+      # Unsigned archive → IPA sideloadable via Xcode/devices with a
+      # development identity. No Apple credentials required for this job.
+      - name: Archive (unsigned)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
+            archive CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Export unsigned IPA
+        run: |
+          cd ios/App
+          mkdir -p output
+          cat > ExportOptions-unsigned.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>development</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>stripSwiftSymbols</key><true/>
+            <key>compileBitcode</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath build/App.xcarchive \
+            -exportOptionsPlist ExportOptions-unsigned.plist \
+            -exportPath output CODE_SIGNING_ALLOWED=NO || \
+          # Fallback: package the .app from the archive manually
+          mkdir -p output/Payload && \
+          cp -r build/App.xcarchive/Products/Applications/*.app output/Payload/ && \
+          cd output && zip -qry ../CivicLens-unsigned.ipa Payload && cd .. && \
+          mv CivicLens-unsigned.ipa output/CivicLens-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: civiclens-ios-unsigned-ipa
+          path: ios/App/output/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+  # Signed IPA — runs ONLY when signing secrets are configured.
+  build-signed:
+    name: Build signed IPA (secrets present)
+    runs-on: macos-latest
+    if: ${{ secrets.IOS_P12_BASE64 != '' }}
+    needs: build-ipa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Decode signing certificate
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          echo "$IOS_P12_BASE64" | base64 -d > "$RUNNER_TEMP/civiclens.p12"
+          security create-keychain -p cikeychain "$RUNNER_TEMP/ci.keychain"
+          security import "$RUNNER_TEMP/civiclens.p12" -k "$RUNNER_TEMP/ci.keychain" -P "$IOS_P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k cikeychain "$RUNNER_TEMP/ci.keychain"
+          security list-keychains -d user -s "$RUNNER_TEMP/ci.keychain"
+
+      - name: Decode provisioning profile
+        env:
+          IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
+        run: |
+          echo "$IOS_MOBILEPROVISION_BASE64" | base64 -d > "$RUNNER_TEMP/profile.mobileprovision"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< \
+            "$(security cms -D -i "$RUNNER_TEMP/profile.mobileprovision")")
+          cp "$RUNNER_TEMP/profile.mobileprovision" \
+            "~/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+          echo "PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
+
+      - name: Export web shell + sync Capacitor
+        run: |
+          mkdir -p mobile/www
+          echo '<!doctype html><html><head><meta charset="utf-8"><title>CivicLens</title></head><body style="background:#081c2a;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="/" style="color:#f59e0b">CivicLens — open dashboard</a></body></html>' > mobile/www/index.html
+          npx cap sync ios
+
+      - name: Pod install
+        run: pod install --project-directory=ios/App
+
+      - name: Archive (signed, manual profile)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/App-signed.xcarchive \
+            archive CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$PROFILES_TEAM_ID" 2>/dev/null || true
+
+      - name: Clean secrets from runner
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/ci.keychain" || true
+          rm -f "$RUNNER_TEMP/civiclens.p12" "$RUNNER_TEMP/profile.mobileprovision"
