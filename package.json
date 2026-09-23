@@ -9,9 +9,19 @@
     "setup:ml": "sh ./scripts/setup-ml.sh",
     "build": "next build",
     "start": "sh ./scripts/start-prod.sh",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mobile:export": "next build && next export -o mobile/www || (mkdir -p mobile/www && cp -r out/* mobile/www/ 2>/dev/null || true)",
+    "cap:sync": "bun run mobile:export && cap sync",
+    "cap:android": "bun run cap:sync && cap open android",
+    "cap:ios": "bun run cap:sync && cap open ios",
+    "android:debug": "cd android && ./gradlew assembleDebug",
+    "android:release": "cd android && ./gradlew assembleRelease bundleRelease",
+    "ios:build": "cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath build/App.xcarchive archive"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@neondatabase/serverless": "^0.10.4",
     "@react-three/drei": "9.114.3",
     "@react-three/fiber": "8.17.10",
@@ -31,6 +41,7 @@
     "uploadthing": "^6.7.44"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@types/animejs": "3.1.12",
     "@types/leaflet": "^1.9.14",
     "@types/node": "^22.10.1",
