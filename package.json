@@ -14,6 +14,7 @@
     "cap:sync": "bun run mobile:export && cap sync",
     "cap:android": "bun run cap:sync && cap open android",
     "cap:ios": "bun run cap:sync && cap open ios",
+    "github:connect": "sh ./scripts/github-connect.sh",
     "android:debug": "cd android && ./gradlew assembleDebug",
     "android:release": "cd android && ./gradlew assembleRelease bundleRelease",
     "ios:build": "cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath build/App.xcarchive archive"
