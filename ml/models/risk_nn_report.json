@@ -1,0 +1,61 @@
+{
+  "architecture": [
+    10,
+    32,
+    16,
+    8,
+    4
+  ],
+  "n_train": 3200,
+  "n_test": 800,
+  "epochs": 220,
+  "final_loss": 0.2266,
+  "nn_accuracy": 0.91,
+  "nn_macro_f1": 0.7862,
+  "rule_baseline_accuracy": 0.5125,
+  "confusion_matrix": [
+    [
+      2,
+      3,
+      0,
+      0
+    ],
+    [
+      0,
+      252,
+      36,
+      0
+    ],
+    [
+      0,
+      18,
+      452,
+      8
+    ],
+    [
+      0,
+      0,
+      7,
+      22
+    ]
+  ],
+  "risk_levels": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "CRITICAL"
+  ],
+  "feature_order": [
+    "complaint_count",
+    "complaint_growth_rate",
+    "severity",
+    "image_confidence",
+    "accident_count",
+    "rainfall",
+    "traffic_level",
+    "historical_incidents",
+    "distance_to_previous_incident",
+    "time_of_day"
+  ],
+  "trained_at": "2026-09-23T02:57:03"
+}
