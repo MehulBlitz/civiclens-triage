@@ -49,3 +49,4 @@ android/key.properties
 tsconfig.tsbuildinfo
 .vly-run/
 isolate/
+.vercel/
