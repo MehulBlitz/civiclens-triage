@@ -71,7 +71,8 @@ jobs:
             rm -rf output/Payload
             mkdir -p output/Payload
             cp -R build/App.xcarchive/Products/Applications/*.app output/Payload/
-            (cd output && zip -qry ../CivicLens-unsigned.ipa Payload)
+            (cd output && zip -qry CivicLens-unsigned.ipa Payload)
+            ls -la output
           fi
 
       - name: Upload unsigned IPA
