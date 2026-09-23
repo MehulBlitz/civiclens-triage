@@ -4,6 +4,12 @@ Production web app: **Next.js 14** (dashboard + API routes) with a
 **scikit-learn ML service** for triage, a **Neon Postgres** database, and
 **Capacitor** native shells for Android/iOS.
 
+**Live:** https://nextjs-boilerplate-one-lac-zbu1jn70rc.vercel.app
+(deployed via the Vercel REST API; `DATABASE_URL`, `UPLOADTHING_SECRET`,
+`UPLOADTHING_APP_ID` are configured on the project for all targets; the ML
+layer intentionally degrades to the in-process lexical engine there —
+`/api/health` shows `degraded` until an ML service URL is attached).
+
 ---
 
 ## 1. Web production deploy
