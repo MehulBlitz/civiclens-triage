@@ -10,12 +10,19 @@
  *  L3  manual    No layer matched — complaint lands in the needs_review
  *                queue for a human decision. The pipeline never fails.
  *
+ * Image evidence (when attached) is analyzed in parallel by the vision layer:
+ * the from-scratch CNN classifies the photo into the 8 categories, estimates
+ * image severity, and the forensics stack (EXIF integrity, ELA/block-error,
+ * pHash) composes a 0-1 evidence trust score — with its own fallback chain
+ * (Python service -> local TS analysis -> no signals).
+ *
  * After classification, unresolved locations are geocoded with free
  * Nominatim (OpenStreetMap) so every complaint can appear on the map.
  */
 import { geocode } from "./geocode";
 import { classifyLexical } from "./lexical";
 import { mlClassifyBatch } from "./ml";
+import { analyzeImage, composeTrust } from "../vision";
 import { CATEGORIES, CATEGORY_DEPARTMENT, PRIORITIES, type Priority } from "../civic";
 
 export type SourceLayer = "ml_model" | "rules" | "manual";
@@ -31,8 +38,29 @@ export type TriageOutcome = {
   lng: number | null;
   sourceLayer: SourceLayer;
   status: "open" | "needs_review";
+  /** Image-evidence analysis result (null when no photo attached). */
+  vision: VisionFields | null;
   /** Human-readable pipeline trace (which layers ran, why they fell back). */
   notes: string[];
+};
+
+export type VisionFields = {
+  trustScore: number;
+  trustBand: string;
+  trustBreakdown: Record<string, number>;
+  trustFlags: string[];
+  imagePhash: string | null;
+  cnnCategory: string | null;
+  cnnSeverity: number | null;
+  visionSource: string;
+  cnnConfidence: number | null;
+  /** Photo-derived signals for the UI (dimensions, exif profile). */
+  width: number | null;
+  height: number | null;
+  exifIntegrity: number | null;
+  elaSuspicion: number | null;
+  editedBy: string | null;
+  capturedAt: string | null;
 };
 
 const MANUAL_RESULT = {
@@ -82,6 +110,7 @@ function normalize(
     lng: null,
     sourceLayer,
     status: "open",
+    vision: null,
     notes: [],
   };
 }
@@ -93,7 +122,7 @@ function normalize(
  */
 export async function triageComplaint(
   rawText: string,
-  opts: { imageUrl?: string | null; locationHint?: string | null } = {}
+  opts: { imageUrl?: string | null; locationHint?: string | null; source?: string; knownPhashes?: string[] } = {}
 ): Promise<TriageOutcome> {
   const notes: string[] = [];
   let outcome: TriageOutcome | null = null;
@@ -173,6 +202,59 @@ export async function triageComplaint(
     );
     outcome.status = "needs_review";
     notes.push("L3 manual review: queued for a human decision");
+  }
+
+  // --- Vision: analyze the evidence photo (CNN + forensics + trust) -------
+  if (opts.imageUrl && outcome) {
+    try {
+      const signals = await analyzeImage(opts.imageUrl, {
+        textCategory: outcome.category,
+        source: opts.source ?? "manual",
+      });
+      if (signals.ok) {
+        const trust = composeTrust(signals, {
+          textCategory: outcome.category,
+          source: opts.source ?? "manual",
+          knownPhashes: opts.knownPhashes ?? [],
+        });
+        outcome.vision = {
+          trustScore: trust.score,
+          trustBand: trust.band,
+          trustBreakdown: trust.breakdown,
+          trustFlags: trust.flags,
+          imagePhash: signals.phash,
+          cnnCategory: signals.cnn?.category ?? null,
+          cnnSeverity: signals.cnn?.severity ?? null,
+          visionSource: signals.forensicsSource === "python_service" ? "python_service" : "ts_local",
+          cnnConfidence: signals.cnn?.confidence ?? null,
+          width: signals.width ?? null,
+          height: signals.height ?? null,
+          exifIntegrity: signals.exif?.integrity ?? null,
+          elaSuspicion: signals.ela?.tamperSuspicion ?? null,
+          editedBy: signals.exif?.editedBy ?? null,
+          capturedAt: null,
+        };
+        notes.push(
+          `Vision: CNN sees ${outcome.vision.cnnCategory ?? "—"} (${Math.round(
+            (outcome.vision.cnnConfidence ?? 0) * 100
+          )}%) · trust ${Math.round(trust.score * 100)}% (${trust.band})`
+        );
+        if (trust.flags.length > 0) {
+          notes.push(`Vision flags: ${trust.flags.join(", ")}`);
+        }
+        // Low-trust evidence cannot silently pass as verified — route to review.
+        if (trust.band === "untrusted") {
+          if (outcome.status === "open") outcome.status = "needs_review";
+          notes.push("Trust gate: evidence scored 'untrusted' → queued for manual review");
+        }
+      } else {
+        notes.push(`Vision: image could not be analyzed (${signals.reason ?? "unknown"})`);
+      }
+    } catch (e) {
+      notes.push(
+        `Vision failed (non-fatal): ${e instanceof Error ? e.message : "unknown"}`
+      );
+    }
   }
 
   // --- Location: user hint first, then free Nominatim geocoding ------------

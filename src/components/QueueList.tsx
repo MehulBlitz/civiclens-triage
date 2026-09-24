@@ -111,6 +111,22 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
                       <AnimatedNumber value={c.reportCount ?? 1} duration={500} />
                     </motion.span>
                   )}
+                  {c.trustBand && (
+                    <span
+                      className={`chip ${
+                        c.trustBand === "high"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : c.trustBand === "medium"
+                            ? "border-sky-200 bg-sky-50 text-sky-700"
+                            : c.trustBand === "low"
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-rose-200 bg-rose-50 text-rose-700"
+                      }`}
+                      title={`Evidence trust ${Math.round((c.trustScore ?? 0) * 100)}%`}
+                    >
+                      🛡 {Math.round((c.trustScore ?? 0) * 100)}%
+                    </span>
+                  )}
                   <span className="ml-auto text-[11px] text-ink-400">
                     {relativeTime(c.createdAt)}
                   </span>

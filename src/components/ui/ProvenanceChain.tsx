@@ -49,6 +49,15 @@ function stagesFor(c: Complaint): Stage[] {
       label: "AI analysis",
       detail: `${c.category} · ${c.priority} · confidence ${Math.round(c.confidence * 100)}%`
     },
+    ...(c.trustScore != null
+      ? [
+          {
+            key: "vision",
+            label: "Vision & trust",
+            detail: `CNN ${c.cnnCategory ?? "—"} · trust ${Math.round((c.trustScore ?? 0) * 100)}% (${c.trustBand ?? "—"})${c.visionSource ? ` · ${c.visionSource === "python_service" ? "Python forensics" : "on-device"}` : ""}`
+          }
+        ]
+      : []),
     {
       key: "incident",
       label: "Incident",

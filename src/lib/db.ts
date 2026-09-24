@@ -47,13 +47,29 @@ CREATE TABLE IF NOT EXISTS complaints (
   source text NOT NULL DEFAULT 'manual',
   source_layer text NOT NULL DEFAULT 'rules',
   status text NOT NULL DEFAULT 'open',
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  trust_score double precision,
+  trust_band text,
+  trust_breakdown text,
+  trust_flags text,
+  image_phash text,
+  cnn_category text,
+  cnn_severity double precision,
+  vision_source text
 )`;
 
 const MIGRATIONS = [
   `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS report_count integer NOT NULL DEFAULT 1`,
   `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS duplicate_texts text`,
-  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalated_at timestamptz`
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalated_at timestamptz`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS trust_score double precision`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS trust_band text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS trust_breakdown text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS trust_flags text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS image_phash text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS cnn_category text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS cnn_severity double precision`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS vision_source text`
 ];
 
 /** Additive migrations — safe to run on every boot. */

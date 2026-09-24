@@ -88,6 +88,108 @@ function ProbBar({ dist, chosen }: { dist: Record<string, number>; chosen: strin
   );
 }
 
+const TRUST_BAND_STYLE: Record<string, { chip: string; bar: string; label: string }> = {
+  high: { chip: "border-emerald-200 bg-emerald-50 text-emerald-700", bar: "bg-emerald-500", label: "High trust" },
+  medium: { chip: "border-sky-200 bg-sky-50 text-sky-700", bar: "bg-sky-500", label: "Medium trust" },
+  low: { chip: "border-amber-200 bg-amber-50 text-amber-700", bar: "bg-amber-500", label: "Low trust" },
+  untrusted: { chip: "border-rose-200 bg-rose-50 text-rose-700", bar: "bg-rose-500", label: "Untrusted" },
+};
+
+const BREAKDOWN_LABELS: Record<string, string> = {
+  image_forensics: "Image forensics",
+  image_text_consistency: "Image ↔ text match",
+  geolocation: "Geolocation",
+  crowd_corroboration: "Crowd corroboration",
+  source_reputation: "Source reputation",
+  duplicate_check: "Duplicate check",
+};
+
+/** Evidence trust: composite score + per-signal breakdown + inspection flags. */
+function TrustCard({ complaint }: { complaint: Complaint }) {
+  const band = complaint.trustBand ?? "medium";
+  const style = TRUST_BAND_STYLE[band] ?? TRUST_BAND_STYLE.medium;
+  let breakdown: Record<string, number> = {};
+  let flags: string[] = [];
+  try {
+    if (complaint.trustBreakdown) breakdown = JSON.parse(complaint.trustBreakdown);
+    if (complaint.trustFlags) flags = JSON.parse(complaint.trustFlags);
+  } catch {
+    // corrupted JSON — show score only
+  }
+  const pct = Math.round((complaint.trustScore ?? 0) * 100);
+  const cnnAgrees =
+    complaint.cnnCategory != null && complaint.cnnCategory === complaint.category;
+
+  return (
+    <div className="rounded-lg border border-[color:var(--line)] px-3 py-2.5" style={{ background: "var(--paper-sunken)" }}>
+      <div className="flex items-center justify-between">
+        <p className="label">Evidence trust</p>
+        <span className={`chip ${style.chip}`}>
+          {style.label} · {pct}%
+        </span>
+      </div>
+      <div className="meter mt-1.5">
+        <span
+          className={`block h-full rounded-full ${style.bar}`}
+          style={{ width: `${Math.max(2, pct)}%` }}
+        />
+      </div>
+
+      {complaint.cnnCategory && (
+        <p className="mt-2 text-xs text-ink-700">
+          Photo model: <span className="font-bold">{complaint.cnnCategory}</span>
+          {complaint.cnnSeverity != null && (
+            <> · degradation {Math.round(complaint.cnnSeverity * 100)}%</>
+          )}
+          {cnnAgrees ? (
+            <span className="ml-1 font-semibold text-emerald-600">✓ agrees with text</span>
+          ) : (
+            <span className="ml-1 font-semibold text-amber-600">⚠ differs from text</span>
+          )}
+        </p>
+      )}
+
+      {Object.keys(breakdown).length > 0 && (
+        <div className="mt-2 space-y-1">
+          {Object.entries(breakdown)
+            .filter(([k]) => BREAKDOWN_LABELS[k])
+            .map(([k, v]) => (
+              <div key={k} className="flex items-center gap-2 text-[11px]">
+                <span className="w-32 shrink-0 text-ink-500">{BREAKDOWN_LABELS[k]}</span>
+                <div className="meter flex-1">
+                  <span
+                    className="block h-full rounded-full bg-blue-500/70"
+                    style={{ width: `${Math.round(v * 100)}%` }}
+                  />
+                </div>
+                <span className="w-8 text-right text-ink-500">{Math.round(v * 100)}%</span>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {flags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {flags.map((f) => (
+            <span
+              key={f}
+              className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600"
+              title="Forensic inspection flag"
+            >
+              {f}
+            </span>
+          ))}
+        </div>
+      )}
+      {complaint.imagePhash && (
+        <p className="mt-1.5 text-[10px] text-ink-400" title={complaint.imagePhash}>
+          pHash {complaint.imagePhash.slice(0, 8)}… · {complaint.visionSource === "python_service" ? "Python forensics service" : "on-device forensics"}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function DetailPanel({ complaint, onStatusChange, saving }: Props) {
   const [explain, setExplain] = useState<Explain | null>(null);
   const [explainError, setExplainError] = useState<string | null>(null);
@@ -281,6 +383,11 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
+        )}
+
+        {/* Evidence trust card — CNN + forensics verdict on the photo */}
+        {complaint.trustScore != null && (
+          <TrustCard complaint={complaint} />
         )}
 
         <div>

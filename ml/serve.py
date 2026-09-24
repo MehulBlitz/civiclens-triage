@@ -1,15 +1,26 @@
-"""CivicLens ML inference service (FastAPI, pure scikit-learn).
+"""CivicLens ML inference service (FastAPI).
 
 Endpoints:
-  GET  /health   -> model status and training metrics
-  POST /predict  -> classify up to 20 raw complaint texts
+  GET  /health       -> model status and training metrics
+  POST /predict      -> classify up to 20 raw complaint texts (L1 SVM)
+  POST /explain      -> feature-level explanation for one text
+  POST /vision       -> CNN photo classifier (8 categories) + severity head
+  POST /forensics    -> EXIF integrity + ELA tamper analysis + pHash
+  POST /trust        -> composite 0-1 evidence trust score (all signals fused)
+  POST /duplicates   -> TF-IDF cosine + geo duplicate detection over a batch
+  POST /forecast     -> Holt double-exponential forecast of a numeric series
+  POST /anomalies    -> robust z-score spike detection over a series
 
 Run from the project root:
   python3 -m uvicorn ml.serve:app --host 0.0.0.0 --port 8008
 """
 from __future__ import annotations
 
+import base64
+import io
+import sys
 from pathlib import Path
+from typing import Any
 
 import joblib
 import numpy as np
@@ -17,7 +28,18 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from scipy.sparse import hstack, csr_matrix
 
+# Sibling modules import cleanly both as `ml.serve` (uvicorn package path)
+# and as a direct script — make the ml/ dir importable either way.
+_ML_DIR = str(Path(__file__).resolve().parent)
+if _ML_DIR not in sys.path:
+    sys.path.insert(0, _ML_DIR)
+
+from duplicates import detect_flooding, find_duplicates  # noqa: E402
+from forensics import assess_image, compose_trust_score, load_image  # noqa: E402
+from timeseries import anomaly_score, forecast_series  # noqa: E402
+
 MODELS_PATH = Path(__file__).resolve().parent / "models" / "triage_bundle.joblib"
+CNN_PATH = Path(__file__).resolve().parent / "models" / "civic_cnn.npz"
 
 URGENT_MARKERS = [
     "urgent", "emergency", "accident", "fell", "children", "school",
@@ -30,9 +52,26 @@ HIGH_MARKERS = [
     "dead for", "no water", "weeks", "days", "contaminated",
 ]
 
-app = FastAPI(title="CivicLens Triage ML", version="1.0.0")
+app = FastAPI(title="CivicLens Triage ML", version="2.0.0")
 
-_state = {"bundle": None}
+_state = {"bundle": None, "cnn": None}
+
+# Layers used by the CNN (mirror of train_cnn.py) — loaded lazily.
+def load_cnn():
+    if _state["cnn"] is None:
+        if not CNN_PATH.exists():
+            raise FileNotFoundError(
+                "CNN weights not found. Train with: python3 ml/train_cnn.py"
+            )
+        import train_cnn as cnn
+        data = np.load(CNN_PATH)
+        params = {k: data[k] for k in data.files if k not in ("categories", "input_shape")}
+        _state["cnn"] = {
+            "params": params,
+            "categories": [str(c) for c in data["categories"]],
+            "module": cnn,
+        }
+    return _state["cnn"]
 
 
 def load_bundle():
@@ -72,6 +111,46 @@ class PredictIn(BaseModel):
 
 class ExplainIn(BaseModel):
     text: str = Field(..., min_length=1, max_length=4000)
+
+
+class VisionIn(BaseModel):
+    # Either base64 image bytes or an http(s) URL the service can fetch.
+    image_base64: str | None = None
+    image_url: str | None = None
+
+
+class ForensicsIn(BaseModel):
+    image_base64: str | None = None
+    image_url: str | None = None
+    submitted_at: str | None = None
+
+
+class TrustIn(BaseModel):
+    image_base64: str | None = None
+    image_url: str | None = None
+    submitted_at: str | None = None
+    text_category: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    source: str = "manual"
+    report_count: int = 1
+    known_phashes: list[str] = Field(default_factory=list, max_length=500)
+    has_text: bool = True
+
+
+class DuplicatesIn(BaseModel):
+    complaints: list[dict[str, Any]] = Field(..., min_length=2, max_length=2000)
+    similarity_threshold: float = 0.55
+
+
+class ForecastIn(BaseModel):
+    values: list[float] = Field(..., min_length=1, max_length=400)
+    horizon: int = Field(7, ge=1, le=30)
+
+
+class AnomaliesIn(BaseModel):
+    values: list[float] = Field(..., min_length=1, max_length=400)
+    threshold: float = 3.5
 
 
 DENSE_FEATURE_NAMES = [
@@ -168,13 +247,19 @@ def explain(body: ExplainIn):
 def health():
     try:
         b = load_bundle()
+        cnn_ok = CNN_PATH.exists()
         return {
             "status": "ok",
             "model_loaded": True,
+            "cnn_loaded": cnn_ok,
             "version": b.get("version"),
             "trained_at": b.get("trained_at"),
             "n_samples": b.get("n_samples"),
             "metrics": b.get("metrics"),
+            "capabilities": [
+                "predict", "explain", "vision", "forensics", "trust",
+                "duplicates", "forecast", "anomalies",
+            ],
         }
     except FileNotFoundError as e:
         return {"status": "no_model", "model_loaded": False, "detail": str(e)}
@@ -219,3 +304,144 @@ def predict(body: PredictIn):
             },
         })
     return {"results": results}
+
+
+# ---------------------------------------------------------------------------
+# Vision: from-scratch CNN photo classifier + severity head
+# ---------------------------------------------------------------------------
+
+def _resolve_image_bytes(body) -> bytes:
+    """Image bytes from base64 payload or an http(s) URL (8s timeout)."""
+    if body.image_base64:
+        try:
+            return base64.b64decode(body.image_base64, validate=False)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, f"Invalid base64 image: {e}") from e
+    if body.image_url:
+        import urllib.request
+
+        url = str(body.image_url)
+        if not (url.startswith("http://") or url.startswith("https://")):
+            raise HTTPException(400, "image_url must be http(s)")
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "CivicLens-ML/2.0"}
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:  # noqa: S310
+                data = resp.read(8 * 1024 * 1024)
+            if not data:
+                raise HTTPException(400, "Image URL returned an empty body")
+            return data
+        except HTTPException:
+            raise
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, f"Could not fetch image_url: {e}") from e
+    raise HTTPException(400, "Provide image_base64 or image_url")
+
+
+def _cnn_predict(data: bytes) -> dict[str, Any]:
+    """Forward the image through the NumPy CNN; degrade honestly on failure."""
+    try:
+        cnn = load_cnn()
+        img = load_image(data)
+        arr = np.asarray(img.convert("L").resize((48, 48)), dtype=np.float32) / 255.0
+        x = arr[None, None, :, :]  # (1,1,48,48)
+        acts = cnn["module"].forward(x, cnn["params"])
+        probs = cnn["module"].softmax(acts["zs"])[0]
+        sev = float(np.clip(acts["sev"][0], 0, 1))
+        order = np.argsort(-probs)
+        cats = cnn["categories"]
+        return {
+            "ok": True,
+            "category": cats[int(order[0])],
+            "confidence": round(float(probs[order[0]]), 4),
+            "severity": round(sev, 4),
+            "probabilities": {
+                cats[i]: round(float(probs[i]), 4) for i in order[:5]
+            },
+        }
+    except FileNotFoundError as e:
+        return {"ok": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": f"vision failed: {e}"}
+
+
+@app.post("/vision")
+def vision(body: VisionIn):
+    data = _resolve_image_bytes(body)
+    return _cnn_predict(data)
+
+
+@app.post("/forensics")
+def forensics(body: ForensicsIn):
+    data = _resolve_image_bytes(body)
+    try:
+        return assess_image(data, submitted_at=body.submitted_at)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"forensics failed: {e}") from e
+
+
+@app.post("/trust")
+def trust(body: TrustIn):
+    """Composite evidence trust score (forensics + CNN consistency + context)."""
+    forensics_payload = None
+    cnn_payload = None
+    try:
+        data = _resolve_image_bytes(body)
+        try:
+            forensics_payload = assess_image(data, submitted_at=body.submitted_at)
+        except Exception:  # noqa: BLE001 — photo-level failure must not kill trust
+            forensics_payload = None
+        cnn_payload = _cnn_predict(data)
+    except HTTPException as e:
+        if e.status_code != 400 or "image_base64 or image_url" not in str(e.detail):
+            # A real fetch/decode problem: proceed with no-image trust path.
+            forensics_payload = None
+            cnn_payload = None
+
+    result = compose_trust_score(
+        forensics=forensics_payload,
+        cnn_category=cnn_payload.get("category") if cnn_payload and cnn_payload.get("ok") else None,
+        cnn_severity_confidence=(
+            cnn_payload.get("confidence") if cnn_payload and cnn_payload.get("ok") else None
+        ),
+        text_category=body.text_category,
+        lat=body.lat,
+        lng=body.lng,
+        source=body.source,
+        report_count=max(1, int(body.report_count or 1)),
+        known_phashes=body.known_phashes,
+        has_text=body.has_text,
+    )
+    result["cnn"] = cnn_payload
+    result["forensics_available"] = forensics_payload is not None
+    return result
+
+
+@app.post("/duplicates")
+def duplicates(body: DuplicatesIn):
+    """Duplicate pairs + coordinated-flooding detection over a complaint batch."""
+    try:
+        pairs = find_duplicates(body.complaints, body.similarity_threshold)
+        flooding = detect_flooding(body.complaints)
+        return {**pairs, "flooding": flooding}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"duplicates failed: {e}") from e
+
+
+@app.post("/forecast")
+def forecast(body: ForecastIn):
+    try:
+        return forecast_series(body.values, horizon=body.horizon)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"forecast failed: {e}") from e
+
+
+@app.post("/anomalies")
+def anomalies(body: AnomaliesIn):
+    try:
+        return anomaly_score(body.values, threshold=body.threshold)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"anomalies failed: {e}") from e

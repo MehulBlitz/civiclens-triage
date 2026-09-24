@@ -144,6 +144,7 @@ def init_params(rng: np.random.Generator) -> dict[str, np.ndarray]:
 
 
 def forward(X: np.ndarray, p: dict[str, np.ndarray]):
+    """Inference forward pass (no dropout — mirrors src/lib/nn/infer.ts)."""
     h1 = np.maximum(0, X @ p["W0"].T + p["b0"])
     h2 = np.maximum(0, h1 @ p["W1"].T + p["b1"])
     h3 = np.maximum(0, h2 @ p["W2"].T + p["b2"])
@@ -157,46 +158,135 @@ def softmax(z: np.ndarray) -> np.ndarray:
     return e / e.sum(axis=1, keepdims=True)
 
 
-def train(X: np.ndarray, y: np.ndarray, seed: int = SEED, epochs: int = 220,
-          lr: float = 0.05, batch: int = 128) -> tuple[dict[str, np.ndarray], list[float]]:
+# ---------------------------------------------------------------------------
+# Training: Adam + L2 + dropout + early stopping (all from scratch)
+# ---------------------------------------------------------------------------
+
+ADAM_BETA1 = 0.9
+ADAM_BETA2 = 0.999
+ADAM_EPS = 1e-8
+
+
+def _adam_init(params: dict[str, np.ndarray]):
+    m = {k: np.zeros_like(v) for k, v in params.items()}
+    v = {k: np.zeros_like(v) for k, v in params.items()}
+    return m, v
+
+
+def _adam_step(params, grads, m, v, t, lr):
+    """Bias-corrected Adam update, ~15 lines as promised."""
+    for k in params:
+        m[k] = ADAM_BETA1 * m[k] + (1 - ADAM_BETA1) * grads[k]
+        v[k] = ADAM_BETA2 * v[k] + (1 - ADAM_BETA2) * (grads[k] ** 2)
+        m_hat = m[k] / (1 - ADAM_BETA1 ** t)
+        v_hat = v[k] / (1 - ADAM_BETA2 ** t)
+        params[k] -= lr * m_hat / (np.sqrt(v_hat) + ADAM_EPS)
+
+
+def _dropout(mask_rng: np.random.Generator, a: np.ndarray, rate: float) -> tuple[np.ndarray, np.ndarray]:
+    """Inverted dropout: scales by 1/(1-rate) at train time so inference is untouched."""
+    if rate <= 0:
+        return a, np.ones_like(a)
+    keep = (mask_rng.random(a.shape) >= rate).astype(a.dtype) / (1.0 - rate)
+    return a * keep, keep
+
+
+def _val_loss(params, Xv, yv):
+    _, _, _, logits = forward(Xv, params)
+    probs = softmax(logits)
+    return float(-np.log(probs[np.arange(len(yv)), yv] + 1e-9).mean())
+
+
+def train(
+    X: np.ndarray,
+    y: np.ndarray,
+    seed: int = SEED,
+    epochs: int = 400,
+    lr: float = 0.003,
+    batch: int = 128,
+    l2: float = 1e-4,
+    dropout: float = 0.1,
+    patience: int = 60,
+    val_fraction: float = 0.1,
+    balanced: bool = True,
+) -> tuple[dict[str, np.ndarray], list[float]]:
+    """Adam + L2 + inverted dropout + early stopping + class-balanced CE.
+
+    Returns (params, val_loss_history). Early stopping restores the best
+    validation-loss weights, replacing the old fixed-epoch fixed-LR SGD.
+    """
     rng = np.random.default_rng(seed)
+    mask_rng = np.random.default_rng(seed + 1)
+    n_all = X.shape[0]
+    n_val = max(1, int(n_all * val_fraction))
+    Xv, yv = X[:n_val], y[:n_val]
+    Xt, yt = X[n_val:], y[n_val:]
+
+    # Inverse-frequency class weights (normalized to mean 1) so the rare
+    # LOW/CRITICAL heads are not sacrificed to the MEDIUM/HIGH majority.
+    w_map = np.ones(N_CLASSES)
+    if balanced:
+        counts = np.bincount(yt, minlength=N_CLASSES).astype(float)
+        w_map = counts.sum() / np.maximum(1.0, counts)
+        w_map /= w_map.mean()
+
     params = init_params(rng)
-    n = X.shape[0]
-    losses: list[float] = []
+    m, v = _adam_init(params)
+    best = {"loss": float("inf"), "params": None, "epoch": 0}
+    history: list[float] = []
+    t = 0
 
     for epoch in range(epochs):
-        order = rng.permutation(n)
-        epoch_loss = 0.0
-        for start in range(0, n, batch):
+        order = rng.permutation(Xt.shape[0])
+        for start in range(0, Xt.shape[0], batch):
             idx = order[start:start + batch]
-            xb, yb = X[idx], y[idx]
+            xb, yb = Xt[idx], yt[idx]
+            sw = w_map[yb]  # per-sample loss weight
 
-            h1, h2, h3, logits = forward(xb, params)
+            # Forward with inverted dropout on the two hidden layers.
+            z1 = xb @ params["W0"].T + params["b0"]
+            h1 = np.maximum(0, z1)
+            d1, k1 = _dropout(mask_rng, h1, dropout)
+            z2 = d1 @ params["W1"].T + params["b1"]
+            h2 = np.maximum(0, z2)
+            d2, k2 = _dropout(mask_rng, h2, dropout)
+            z3 = d2 @ params["W2"].T + params["b2"]
+            h3 = np.maximum(0, z3)
+            d3, k3 = _dropout(mask_rng, h3, dropout)
+            logits = d3 @ params["W3"].T + params["b3"]
+
             probs = softmax(logits)
-            epoch_loss += float(-np.log(probs[np.arange(len(idx)), yb] + 1e-9).sum())
-
-            # Cross-entropy + softmax gradient
             dlogits = probs.copy()
             dlogits[np.arange(len(idx)), yb] -= 1
+            dlogits *= sw[:, None]  # weighted CE gradient
 
             grads: dict[str, np.ndarray] = {}
-            grads["W3"] = dlogits.T @ h3 / len(idx)
+            grads["W3"] = dlogits.T @ d3 / len(idx) + l2 * params["W3"]
             grads["b3"] = dlogits.mean(axis=0)
-            dh3 = dlogits @ params["W3"] * (h3 > 0)
-            grads["W2"] = dh3.T @ h2 / len(idx)
-            grads["b2"] = dh3.mean(axis=0)
-            dh2 = dh3 @ params["W2"] * (h2 > 0)
-            grads["W1"] = dh2.T @ h1 / len(idx)
+            dh3 = (dlogits @ params["W3"]) * k3 * (h3 > 0)
+            dz3 = dh3
+            grads["W2"] = dz3.T @ d2 / len(idx) + l2 * params["W2"]
+            grads["b2"] = dz3.mean(axis=0)
+            dh2 = (dz3 @ params["W2"]) * k2 * (h2 > 0)
+            grads["W1"] = dh2.T @ d1 / len(idx) + l2 * params["W1"]
             grads["b1"] = dh2.mean(axis=0)
-            dh1 = dh2 @ params["W1"] * (h1 > 0)
-            grads["W0"] = dh1.T @ xb / len(idx)
+            dh1 = (dh2 @ params["W1"]) * k1 * (h1 > 0)
+            grads["W0"] = dh1.T @ xb / len(idx) + l2 * params["W0"]
             grads["b0"] = dh1.mean(axis=0)
 
-            for k in params:
-                params[k] -= lr * grads[k]
-        losses.append(epoch_loss / n)
+            t += 1
+            _adam_step(params, grads, m, v, t, lr)
 
-    return params, losses
+        vl = _val_loss(params, Xv, yv)
+        history.append(vl)
+        if vl < best["loss"] - 1e-5:
+            best = {"loss": vl, "params": {k: w.copy() for k, w in params.items()}, "epoch": epoch}
+        if epoch - best["epoch"] >= patience:
+            break
+
+    if best["params"] is not None:
+        params = best["params"]
+    return params, history
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +344,10 @@ def main() -> None:
         "n_train": int(split),
         "n_test": int(len(X) - split),
         "epochs": len(losses),
-        "final_loss": round(float(losses[-1]), 4),
+        "optimizer": "adam",
+        "regularization": {"l2": 1e-4, "dropout": 0.15, "early_stopping": True},
+        "best_val_loss": round(float(min(losses)), 4) if losses else None,
+        "final_loss": round(float(losses[-1]), 4) if losses else None,
         "nn_accuracy": round(nn_acc, 4),
         "nn_macro_f1": round(macro_f1, 4),
         "rule_baseline_accuracy": round(rule_acc, 4),
