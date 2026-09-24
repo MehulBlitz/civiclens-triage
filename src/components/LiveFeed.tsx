@@ -122,7 +122,7 @@ export default function LiveFeed({ onTriaged }: Props) {
 
   return (
     <section className="card overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Live city feed</h2>
           <p className="text-xs text-slate-500">
@@ -132,7 +132,7 @@ export default function LiveFeed({ onTriaged }: Props) {
         <button
           type="button"
           onClick={() => setOn((v) => !v)}
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${
+          className={`min-h-touch rounded-full border px-3.5 py-2 text-xs font-bold transition active:scale-95 sm:py-1.5 ${
             on
               ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
               : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
@@ -142,7 +142,7 @@ export default function LiveFeed({ onTriaged }: Props) {
         </button>
       </div>
 
-      <div className="px-5 py-3">
+      <div className="px-4 py-3 sm:px-5">
         {error && (
           <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
             {error}
@@ -173,7 +173,7 @@ export default function LiveFeed({ onTriaged }: Props) {
                           : "#0ea5e9"
                 }}
               />
-              <span className="min-w-0 flex-1 truncate text-slate-700" title={it.text}>
+              <span className="line-clamp-2 min-w-0 flex-1 text-slate-700" title={it.text}>
                 {it.text}
               </span>
               <span className="shrink-0 rounded bg-white px-1.5 py-0.5 font-semibold text-slate-600">
@@ -181,11 +181,11 @@ export default function LiveFeed({ onTriaged }: Props) {
               </span>
               {it.escalated ? (
                 <span className="shrink-0 rounded bg-rose-600 px-1.5 py-0.5 font-bold text-white">
-                  ⚡ escalated ×{it.reportCount}
+                  ⚡ ×{it.reportCount}
                 </span>
               ) : it.merged ? (
                 <span className="shrink-0 rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700">
-                  merged ×{it.reportCount}
+                  ×{it.reportCount}
                 </span>
               ) : null}
             </li>

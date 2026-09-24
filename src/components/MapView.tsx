@@ -41,7 +41,7 @@ export default function MapView({ complaints, selectedId, onSelect }: Props) {
       center={center}
       zoom={located.length > 0 ? 12 : 11}
       scrollWheelZoom
-      className="h-[420px] w-full rounded-xl bg-slate-100"
+      className="h-[320px] w-full rounded-xl bg-slate-100 sm:h-[420px]"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

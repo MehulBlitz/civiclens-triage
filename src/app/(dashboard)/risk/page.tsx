@@ -16,10 +16,10 @@ export default function RiskPage() {
   } = useCivic();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 xl:space-y-5">
       {/* Header card */}
       <section className="card overflow-hidden bg-civic-950">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5 sm:py-4">
           <div>
             <h2 className="text-sm font-bold text-white">
               Civic Incident Neural Network
@@ -32,17 +32,17 @@ export default function RiskPage() {
           <button
             type="button"
             onClick={() => void refreshRisk()}
-            className="rounded-full border border-white/20 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-white/10"
+            className="min-h-touch rounded-full border border-white/20 px-3.5 py-2 text-[11px] font-bold text-white transition hover:bg-white/10 active:scale-95 sm:py-1"
           >
             ↻ rescore situations
           </button>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:gap-5">
         {/* Situations */}
-        <div className="space-y-5 xl:col-span-7">
-          <section className="card p-4">
+        <div className="space-y-4 xl:col-span-7 xl:space-y-5">
+          <section className="card p-3.5 sm:p-4">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-ink-900">
@@ -63,13 +63,13 @@ export default function RiskPage() {
                 start the live feed.
               </p>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {situations.map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     onClick={() => setSelectedId(s.anchorId)}
-                    className={`rounded-xl border px-3 py-2.5 text-left transition ${
+                    className={`rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] ${
                       selected?.id === s.anchorId
                         ? "border-amber-400 bg-amber-50"
                         : "border-slate-200 bg-white hover:border-civic-300"
@@ -95,7 +95,7 @@ export default function RiskPage() {
                     <p className="mt-1 truncate text-xs text-ink-700">
                       {s.location ?? "unlocated"}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-ink-500">
+                    <p className="mt-0.5 text-[11px] leading-snug text-ink-500">
                       {s.explanation}
                       {s.rainfallMm != null && s.rainfallMm > 0
                         ? ` · rain ${s.rainfallMm}mm/24h`
@@ -109,14 +109,14 @@ export default function RiskPage() {
         </div>
 
         {/* NN diagram + selection info */}
-        <div className="space-y-5 xl:col-span-5">
+        <div className="space-y-4 xl:col-span-5 xl:space-y-5">
           <NeuralNetDiagram
             prediction={selectedPrediction}
             situationLabel={
               selected ? `#${selected.id} · ${selected.category}` : "no selection"
             }
           />
-          <section className="card px-4 py-3 text-xs text-ink-500">
+          <section className="card px-4 py-3 text-xs leading-relaxed text-ink-500">
             <p>
               <span className="font-bold text-ink-900">Live inference:</span>{" "}
               selecting a complaint runs the same network client-side over its

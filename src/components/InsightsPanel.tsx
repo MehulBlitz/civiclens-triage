@@ -66,7 +66,7 @@ export default function InsightsPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-3.5 text-left"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left transition hover:bg-slate-50 active:bg-slate-100 sm:px-5"
       >
         <div>
           <h2 className="text-sm font-bold text-ink-900">Corpus insights</h2>
@@ -74,13 +74,13 @@ export default function InsightsPanel() {
             Duplicate detection · coordinated-flood alarms · volume forecast
           </p>
         </div>
-        <span className="text-xs font-semibold text-civic-700">
+        <span className="min-h-touch flex items-center text-xs font-semibold text-civic-700">
           {open ? "Hide" : "Show"}
         </span>
       </button>
 
       {open && (
-        <div className="space-y-4 border-t border-[color:var(--line)] px-5 py-4">
+        <div className="space-y-4 border-t border-[color:var(--line)] px-4 py-4 sm:px-5">
           {loading && (
             <p className="text-xs text-slate-400">Analyzing corpus…</p>
           )}

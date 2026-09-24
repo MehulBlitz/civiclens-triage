@@ -27,6 +27,7 @@ const config: Config = {
           700: "#24344d",
           900: "#0b1526"
         },
+        // Mobile-friendly tap-target minimum (44px Apple HIG).
         // Instrument blue ramp.
         blue: {
           100: "#dbe7f5",
@@ -39,6 +40,9 @@ const config: Config = {
           800: "#1c3b63",
           900: "#16304f"
         }
+      },
+      minHeight: {
+        touch: "2.75rem"
       },
       boxShadow: {
         card: "0 1px 2px rgba(15,30,55,0.04), 0 12px 28px -22px rgba(15,30,55,0.3)",

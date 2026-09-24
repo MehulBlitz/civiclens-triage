@@ -130,13 +130,13 @@ export default function ChannelsPanel({ onTriaged }: Props) {
         </p>
       </div>
 
-      <div className="space-y-3 px-5 py-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-3 px-4 py-4 sm:px-5">
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={() => void postDemo("whatsapp")}
             disabled={busy !== null}
-            className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+            className="min-h-touch rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:opacity-50 sm:flex-1 sm:py-1.5"
           >
             {busy === "whatsapp" ? "Sending…" : "WhatsApp ⌁ simulate"}
           </button>
@@ -144,7 +144,7 @@ export default function ChannelsPanel({ onTriaged }: Props) {
             type="button"
             onClick={() => void postDemo("x")}
             disabled={busy !== null}
-            className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+            className="min-h-touch rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 active:scale-95 disabled:opacity-50 sm:flex-1 sm:py-1.5"
           >
             {busy === "x" ? "Posting…" : "X ⌁ simulate posts"}
           </button>
@@ -152,7 +152,7 @@ export default function ChannelsPanel({ onTriaged }: Props) {
             type="button"
             onClick={fetchNews}
             disabled={busy !== null}
-            className="rounded-lg border border-civic-300 bg-civic-50 px-3 py-1.5 text-xs font-bold text-civic-700 transition hover:bg-civic-100 disabled:opacity-50"
+            className="min-h-touch rounded-lg border border-civic-300 bg-civic-50 px-3 py-2 text-xs font-bold text-civic-700 transition hover:bg-civic-100 active:scale-95 disabled:opacity-50 sm:flex-1 sm:py-1.5"
           >
             {busy === "news" ? "Scanning feeds…" : "News ⌁ fetch RSS"}
           </button>
@@ -177,12 +177,12 @@ export default function ChannelsPanel({ onTriaged }: Props) {
                 <span className="rounded bg-civic-100 px-1.5 py-0.5 font-bold text-civic-700">
                   {n.civicScore}
                 </span>
-                <span className="min-w-0 flex-1 text-slate-700">{n.title}</span>
+                <span className="min-w-0 flex-1 leading-snug text-slate-700">{n.title}</span>
                 <button
                   type="button"
                   onClick={() => void acceptNews(i)}
                   disabled={busy !== null}
-                  className="shrink-0 rounded bg-civic-700 px-2 py-1 font-semibold text-white hover:bg-civic-800 disabled:opacity-50"
+                  className="min-h-touch shrink-0 rounded bg-civic-700 px-2.5 py-1.5 font-semibold text-white transition hover:bg-civic-800 active:scale-95 disabled:opacity-50 sm:py-1"
                 >
                   {busy === `news-${i}` ? "…" : "Triage"}
                 </button>

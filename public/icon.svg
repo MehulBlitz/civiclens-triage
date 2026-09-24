@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="108" fill="#081c2a"/>
+  <circle cx="256" cy="238" r="150" fill="#0f2c3f"/>
+  <circle cx="256" cy="238" r="150" stroke="#2b80a9" stroke-width="14" stroke-dasharray="26 22"/>
+  <path d="M256 118a56 56 0 0 0-56 56c0 41 56 90 56 90s56-49 56-90a56 56 0 0 0-56-56Zm0 78a22 22 0 1 1 0-44 22 22 0 0 1 0 44Z" fill="#fbbf24"/>
+  <path d="M256 300c-38 0-72 14-88 34 18 42 52 72 88 78 36-6 70-36 88-78-16-20-50-34-88-34Z" fill="#2b80a9" opacity="0.85"/>
+  <text x="256" y="470" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="58" font-weight="800" fill="#e2e8f0">CivicLens</text>
+</svg>

@@ -25,6 +25,9 @@ type Props = {
  *  • priority change: chip cross-fades + color transitions (MEDIUM → HIGH)
  *  • cluster growth: reportCount counter animates when citizens merge in
  *  • exit: cards leave when filtered out (AnimatePresence, no reload)
+ *
+ * Mobile-first: 44px+ tap target, chips wrap cleanly, metadata truncates
+ * with ellipsis instead of overflowing horizontally.
  */
 const STAGGER = 0.035;
 
@@ -36,7 +39,7 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
           No complaints match these filters
         </p>
         <p className="mt-1 text-sm text-ink-400">
-          Clear a filter, or ingest raw text on the left to triage a new one.
+          Clear a filter, or ingest raw text above to triage a new one.
         </p>
       </div>
     );
@@ -68,13 +71,13 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
                 type="button"
                 onClick={() => onSelect(c.id)}
                 aria-pressed={selected}
-                className={`w-full rounded-xl border bg-white px-4 py-3 text-left transition-shadow duration-200 ${
+                className={`w-full rounded-xl border bg-white px-3.5 py-3 text-left transition-shadow duration-200 sm:px-4 ${
                   selected
                     ? "border-blue-400 shadow-lift ring-2 ring-blue-100"
-                    : "border-[color:var(--line)] shadow-card hover:border-blue-300 hover:shadow-lift"
+                    : "border-[color:var(--line)] shadow-card hover:border-blue-300 hover:shadow-lift active:scale-[0.995]"
                 }`}
               >
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   {/* Priority chip — animates on change via key + motion span */}
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.span
@@ -132,16 +135,17 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
                   </span>
                 </div>
 
-                <p className="mt-2 line-clamp-2 text-sm font-medium text-ink-900">
+                <p className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-ink-900">
                   {c.summary}
                 </p>
 
+                {/* Metadata row: wraps on narrow screens instead of truncating */}
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-500">
-                  <span className="inline-flex items-center gap-1">
-                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                  <span className="inline-flex max-w-full items-center gap-1">
+                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
                       <path d="M10 2a6 6 0 0 0-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 0 0-6-6Zm0 8.5A2.5 2.5 0 1 1 10 5.5a2.5 2.5 0 0 1 0 5Z" />
                     </svg>
-                    {c.locationText || "No location"}
+                    <span className="truncate">{c.locationText || "No location"}</span>
                   </span>
                   <span className="inline-flex items-center gap-1 font-semibold text-blue-700">
                     → {c.routeTo}
