@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { bootstrapDb, getDb, DbUnavailableError } from "@/lib/db";
+import { complaints } from "@/lib/schema";
 import { triageComplaint } from "@/lib/triage";
 import { persistComplaint, type PersistResult } from "@/lib/persist";
 import { computeStats } from "@/lib/queries";
@@ -68,11 +69,26 @@ export async function POST(req: Request) {
   let dbFailure: string | null = null;
 
   // Sequential: keeps Nominatim's free-tier rate limit happy.
+  // Known photo hashes give the trust layer its duplicate-evidence check.
+  const knownPhashes: string[] = [];
+  try {
+    const { db } = getDb();
+    const recent = await db
+      .select({ phash: complaints.imagePhash })
+      .from(complaints)
+      .limit(200);
+    for (const r of recent) if (r.phash) knownPhashes.push(r.phash);
+  } catch {
+    // corpus phashes unavailable — duplicate check degrades to off
+  }
+
   for (const item of items) {
     try {
       const outcome = await triageComplaint(item.text, {
         imageUrl: item.imageUrl,
-        locationHint: item.locationHint
+        locationHint: item.locationHint,
+        source: item.source,
+        knownPhashes,
       });
       notes.push(...outcome.notes);
       try {
@@ -89,7 +105,19 @@ export async function POST(req: Request) {
           lng: outcome.lng,
           source: item.source,
           sourceLayer: outcome.sourceLayer,
-          status: outcome.status
+          status: outcome.status,
+          trustScore: outcome.vision?.trustScore ?? null,
+          trustBand: outcome.vision?.trustBand ?? null,
+          trustBreakdown: outcome.vision
+            ? JSON.stringify(outcome.vision.trustBreakdown)
+            : null,
+          trustFlags: outcome.vision?.trustFlags.length
+            ? JSON.stringify(outcome.vision.trustFlags)
+            : null,
+          imagePhash: outcome.vision?.imagePhash ?? null,
+          cnnCategory: outcome.vision?.cnnCategory ?? null,
+          cnnSeverity: outcome.vision?.cnnSeverity ?? null,
+          visionSource: outcome.vision?.visionSource ?? null,
         });
         created.push(result.row);
         if (result.merged) {

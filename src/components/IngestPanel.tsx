@@ -4,6 +4,7 @@ import { useState } from "react";
 import { generateUploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 import type { Complaint } from "@/lib/schema";
+import { analyzeImageClient, type ClientPreview } from "@/lib/vision/client";
 import ProcessingStates from "./ui/ProcessingStates";
 
 const TypedUploadButton = generateUploadButton<OurFileRouter>();
@@ -25,6 +26,7 @@ export default function IngestPanel({ onTriaged }: Props) {
   const [bulk, setBulk] = useState(false);
   const [locationHint, setLocationHint] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<ClientPreview | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,13 +182,36 @@ export default function IngestPanel({ onTriaged }: Props) {
                     `Image upload unavailable: ${err.message}. You can still triage the text.`
                   );
                 }}
+                onUploadBegin={(name: string) => {
+                  // Instant local CNN preview once the file object is available:
+                  // the upload button doesn't hand us the File, so we listen for
+                  // the user's selection via a hidden input fallback below.
+                  void name;
+                }}
               />
+              <label className="cursor-pointer rounded-lg border border-civic-300 bg-white px-3 py-1.5 text-xs font-semibold text-civic-700 hover:bg-civic-50">
+                Analyze locally
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setPreview(null);
+                    setPreview(await analyzeImageClient(file));
+                  }}
+                />
+              </label>
               {imageUrl && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                   ✓ Photo attached
                   <button
                     type="button"
-                    onClick={() => setImageUrl(null)}
+                    onClick={() => {
+                      setImageUrl(null);
+                      setPreview(null);
+                    }}
                     className="text-emerald-600 underline hover:text-emerald-800"
                   >
                     remove
@@ -194,6 +219,29 @@ export default function IngestPanel({ onTriaged }: Props) {
                 </span>
               )}
             </div>
+            {preview && (
+              <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-blue-800">
+                  On-device CNN preview {preview.ok ? `· ${preview.width}×${preview.height}` : "· failed"}
+                </p>
+                {preview.ok && preview.cnn && (
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full bg-blue-600 px-2 py-0.5 font-semibold text-white">
+                      {preview.cnn.category} {Math.round(preview.cnn.confidence * 100)}%
+                    </span>
+                    <span className="text-blue-700">
+                      degradation {Math.round(preview.cnn.severity * 100)}%
+                    </span>
+                    {preview.ela && preview.ela.tamperSuspicion > 0.55 && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+                        ⚠ tamper suspicion
+                      </span>
+                    )}
+                    <span className="text-blue-500">phash {preview.phash?.slice(0, 8)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             {uploadError && (
               <p className="mt-1 text-xs text-rose-600">{uploadError}</p>
             )}

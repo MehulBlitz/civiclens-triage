@@ -23,6 +23,13 @@ export async function GET() {
       : "no_model"
     : "unreachable";
 
+  // Vision layer status: Python CNN/forensics when the service exposes them,
+  // otherwise the always-available TS fallback chain.
+  const vision =
+    ml && typeof ml === "object" && "cnn_loaded" in ml && ml.cnn_loaded
+      ? "python_service"
+      : "ts_local";
+
   return NextResponse.json({
     status: mlStatus === "ready" && env.DATABASE_URL === "set" ? "ok" : "degraded",
     env,
@@ -30,6 +37,11 @@ export async function GET() {
       status: mlStatus,
       ...(ml ?? {}),
       url: process.env.ML_SERVICE_URL ?? "http://127.0.0.1:8008"
+    },
+    vision: {
+      status: vision,
+      cnnCategories: 8,
+      trustLayers: ["python_forensics", "ts_local_forensics", "no_signals"]
     }
   });
 }

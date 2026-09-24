@@ -16,6 +16,7 @@ import LiveFeed from "./LiveFeed";
 import TwinWrapper from "./TwinWrapper";
 import NeuralNetDiagram from "./NeuralNetDiagram";
 import ChannelsPanel from "./ChannelsPanel";
+import InsightsPanel from "./InsightsPanel";
 import { predictRisk, type RiskPrediction } from "@/lib/nn/infer";
 import {
   trafficLevelForHour,
@@ -660,6 +661,7 @@ export default function Dashboard({ initial }: { initial: LoadResult }) {
             />
 
             <ChannelsPanel onTriaged={onTriaged} />
+            <InsightsPanel />
             <AnalyticsPanel complaints={complaints} />
           </div>
         </div>

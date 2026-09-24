@@ -1,0 +1,30 @@
+{
+  "architecture": [
+    1,
+    48,
+    48,
+    8,
+    16,
+    24,
+    64,
+    8
+  ],
+  "n_train": 652,
+  "n_test": 116,
+  "epochs": 40,
+  "final_loss": 0.8025,
+  "cnn_accuracy": 0.7845,
+  "cnn_macro_f1": 0.7698,
+  "severity_mae": 0.1975,
+  "categories": [
+    "Pothole",
+    "Drainage",
+    "Waste",
+    "Water",
+    "Streetlight",
+    "Sewage",
+    "Graffiti",
+    "Other"
+  ],
+  "trained_at": "2026-09-24T02:00:28"
+}

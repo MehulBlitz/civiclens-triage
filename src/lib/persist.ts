@@ -119,13 +119,30 @@ export async function persistComplaint(
       .slice(-6)
     .join("\n");
 
+    // Merged evidence refreshes the trust picture: the newest analysis wins
+    // (it sees the latest photo + corpus phashes) and the crowd component of
+    // every future trust computation grows with reportCount.
+    const trustUpdate = incoming.trustScore != null
+      ? {
+          trustScore: incoming.trustScore,
+          trustBand: incoming.trustBand,
+          trustBreakdown: incoming.trustBreakdown,
+          trustFlags: incoming.trustFlags,
+          imagePhash: incoming.imagePhash ?? master.imagePhash,
+          cnnCategory: incoming.cnnCategory ?? master.cnnCategory,
+          cnnSeverity: incoming.cnnSeverity ?? master.cnnSeverity,
+          visionSource: incoming.visionSource ?? master.visionSource,
+        }
+      : {};
+
     const [updated] = await db
       .update(complaints)
       .set({
         reportCount,
         priority: escalated ? newPriority : master.priority,
         escalatedAt: reportCount >= ESCALATE_AT ? (master.escalatedAt ?? new Date()) : master.escalatedAt,
-        duplicateTexts
+        duplicateTexts,
+        ...trustUpdate
       })
       .where(eq(complaints.id, master.id))
       .returning();
