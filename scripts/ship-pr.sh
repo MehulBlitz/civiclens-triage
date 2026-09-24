@@ -75,8 +75,10 @@ if [ "$CODE" = "201" ]; then
   PR_NUM=$(python3 -c 'import json;print(json.load(open("/tmp/ship_pr.json"))["number"])' 2>/dev/null || true)
   echo "==> PR #$PR_NUM opened"
 elif [ "$CODE" = "422" ] || [ "$CODE" = "400" ]; then
-  PR_NUM=$(gh_req "$API/repos/$REPO_SLUG/pulls?head=$REPO_SLUG:$BRANCH&state=open" \
-    | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d[0]["number"] if d else "")' 2>/dev/null || true)
+  # List open PRs and match on the head ref (head=owner:branch needs encoding;
+  # filtering client-side is simpler and equally reliable).
+  PR_NUM=$(gh_req "$API/repos/$REPO_SLUG/pulls?state=open&per_page=100" \
+    | python3 -c 'import json,sys;branch=sys.argv[1];d=json.load(sys.stdin);print(next((p["number"] for p in d if p["head"]["ref"]==branch),""))' "$BRANCH" 2>/dev/null || true)
   echo "==> PR already exists (#$PR_NUM)"
 else
   echo "ERROR: PR creation failed (HTTP $CODE):"
