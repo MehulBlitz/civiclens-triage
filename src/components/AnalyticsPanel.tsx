@@ -50,20 +50,21 @@ export default function AnalyticsPanel({ complaints }: { complaints: Complaint[]
 
   return (
     <section className="card overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Command analytics</h2>
           <p className="text-xs text-slate-500">
             SLA clocks · department load · crowd clusters — live, zero extra queries
           </p>
         </div>
-        <div className="seg">
+        <div className="seg flex w-full sm:w-auto" role="tablist" aria-label="Analytics view">
           {(["sla", "departments", "trends"] as const).map((t) => (
             <button
               key={t}
               type="button"
               data-active={tab === t}
               onClick={() => setTab(t)}
+              className="flex-1 sm:flex-none"
             >
               {t === "sla" ? "SLA watch" : t === "departments" ? "Dept load" : "14-day trends"}
             </button>
@@ -71,10 +72,10 @@ export default function AnalyticsPanel({ complaints }: { complaints: Complaint[]
         </div>
       </div>
 
-      <div className="space-y-4 px-5 py-4">
+      <div className="space-y-4 px-4 py-4 sm:px-5">
         {tab === "sla" ? (
           <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="rounded-lg bg-rose-50 px-3 py-2">
                 <p className="text-lg font-bold text-rose-700">{analytics.breached.length}</p>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-500">Breached</p>
@@ -93,14 +94,14 @@ export default function AnalyticsPanel({ complaints }: { complaints: Complaint[]
               {[...analytics.breached, ...analytics.atRisk].slice(0, 4).map((c) => {
                 const s = slaState(c.priority, c.createdAt, c.status);
                 return (
-                  <div key={c.id} className="flex items-center gap-3 text-xs">
-                    <span className={`w-24 shrink-0 font-bold ${s.breached ? "text-rose-600" : "text-amber-600"}`}>
+                  <div key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                    <span className={`font-bold ${s.breached ? "text-rose-600" : "text-amber-600"}`}>
                       {s.breached ? "BREACHED" : "AT RISK"}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-slate-700">
                       #{c.id} · {c.summary}
                     </span>
-                    <span className="shrink-0 text-slate-400">{s.label}</span>
+                    <span className="text-slate-400">{s.label}</span>
                   </div>
                 );
               })}

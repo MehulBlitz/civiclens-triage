@@ -232,6 +232,8 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
     );
   }
 
+  // Long records collapse cleanly on mobile; desktop expands by default.
+
   const p = PRIORITY_STYLE[complaint.priority] ?? PRIORITY_STYLE.medium;
   const s = STATUS_STYLE[complaint.status];
   const confidencePct = Math.round(complaint.confidence * 100);
@@ -456,7 +458,8 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
 
         <div>
           <p className="label">Status</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          {/* Touch-friendly: 44px+ tall targets, grid on narrow screens */}
+          <div className="mt-2 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
             {STATUS_FLOW.map((st) => {
               const active = complaint.status === st;
               const style = STATUS_STYLE[st];
@@ -467,9 +470,9 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
                   disabled={saving}
                   onClick={() => onStatusChange(complaint.id, st)}
                   aria-pressed={active}
-                  className={`btn-tactile ${
+                  className={`btn-tactile min-h-touch ${
                     active ? "btn-tactile-primary" : ""
-                  } rounded-full px-3 py-1 ${
+                  } rounded-lg sm:rounded-full sm:px-3 sm:py-1 ${
                     active ? "" : "text-ink-500"
                   }`}
                 >
@@ -478,7 +481,7 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
               );
             })}
             {complaint.status === "needs_review" && (
-              <span className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+              <span className="col-span-3 inline-flex min-h-touch items-center justify-center rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 sm:col-span-1">
                 Awaiting manual triage
               </span>
             )}

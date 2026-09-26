@@ -406,7 +406,7 @@ export default function TwinScene({ items, selectedId, onSelect, quality }: Scen
         powerPreference: "high-performance"
       }}
       style={{ background: "linear-gradient(#081c2a, #0b1c2b)" }}
-      className="h-[420px] w-full rounded-xl"
+      className="h-[320px] w-full rounded-xl sm:h-[420px]"
     >
       <ambientLight intensity={0.75} />
       <directionalLight position={[6, 10, 4]} intensity={1.1} />

@@ -94,7 +94,7 @@ export default function IngestPanel({ onTriaged }: Props) {
         </p>
       </div>
 
-      <div className="space-y-4 px-5 py-4">
+      <div className="space-y-4 px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-center gap-1.5">
           {SOURCES.map((s) => (
             <button
@@ -104,7 +104,7 @@ export default function IngestPanel({ onTriaged }: Props) {
                 setSource(s.id);
                 if (s.id !== "manual") setBulk(false);
               }}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              className={`min-h-touch rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-95 ${
                 source === s.id && !bulk
                   ? "border-blue-700 bg-blue-600 text-white shadow-sm"
                   : "border-[color:var(--line-strong)] bg-white text-ink-500 hover:border-blue-300 hover:text-blue-700"
@@ -116,7 +116,7 @@ export default function IngestPanel({ onTriaged }: Props) {
           <button
             type="button"
             onClick={() => setBulk((b) => !b)}
-            className={`ml-auto rounded-full border px-3 py-1 text-xs font-semibold transition ${
+            className={`ml-auto min-h-touch rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-95 ${
               bulk
                 ? "border-violet-600 bg-violet-600 text-white shadow-sm"
                 : "border-[color:var(--line-strong)] bg-white text-ink-500 hover:border-violet-300 hover:text-violet-700"
@@ -164,12 +164,12 @@ export default function IngestPanel({ onTriaged }: Props) {
         {!bulk && (
           <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3">
             <p className="label">Evidence photo (optional)</p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
               <TypedUploadButton
                 endpoint="imageUploader"
                 appearance={{
                   button:
-                    "bg-civic-700 hover:bg-civic-800 text-white ut-uploading:cursor-not-allowed rounded-lg px-3 py-1.5 text-xs font-semibold",
+                    "min-h-touch bg-civic-700 hover:bg-civic-800 text-white ut-uploading:cursor-not-allowed rounded-lg px-3.5 py-2 text-xs font-semibold sm:py-1.5",
                   allowedContent: "text-xs text-slate-500 ut-allowed-content"
                 }}
                 onClientUploadComplete={(res) => {
@@ -189,7 +189,7 @@ export default function IngestPanel({ onTriaged }: Props) {
                   void name;
                 }}
               />
-              <label className="cursor-pointer rounded-lg border border-civic-300 bg-white px-3 py-1.5 text-xs font-semibold text-civic-700 hover:bg-civic-50">
+              <label className="min-h-touch flex cursor-pointer items-center rounded-lg border border-civic-300 bg-white px-3.5 py-2 text-xs font-semibold text-civic-700 transition hover:bg-civic-50 active:scale-95 sm:py-1.5">
                 Analyze locally
                 <input
                   type="file"
@@ -252,7 +252,7 @@ export default function IngestPanel({ onTriaged }: Props) {
           type="button"
           onClick={submit}
           disabled={busy}
-          className="btn-tactile btn-tactile-amber w-full px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed"
+          className="btn-tactile btn-tactile-amber min-h-touch w-full px-4 py-3 text-sm font-bold disabled:cursor-not-allowed sm:py-2.5 active:scale-[0.99]"
         >
           {busy
             ? "Triaging through the pipeline…"

@@ -129,7 +129,7 @@ export default function TwinWrapper({ items, selectedId, onSelect }: Props) {
           quality={quality}
         />
       ) : (
-        <div className="flex h-[420px] w-full flex-wrap content-start gap-2 overflow-y-auto rounded-xl border border-[color:var(--line)] bg-white p-4">
+        <div className="flex h-[320px] w-full flex-wrap content-start gap-2 overflow-y-auto rounded-xl border border-[color:var(--line)] bg-white p-4 sm:h-[420px]">
           {items.length === 0 && (
             <p className="w-full text-center text-sm text-ink-400">
               No complaints in the current filter.
