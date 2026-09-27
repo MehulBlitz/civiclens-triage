@@ -42,9 +42,9 @@ plus a pipeline trace — fully inspectable in the UI.
 
 | Model | File | What it does | Measured |
 |---|---|---|---|
-| Triage SVM | `ml/train.py` | TF-IDF (word+char) + engineered features → calibrated LinearSVC heads for category (8-way) and priority (4-way) | 1.00 / 0.94 acc |
-| Risk NN | `ml/train_nn.py` | 10→32→16→8→4 MLP (NumPy) trained with **Adam + L2 + dropout + early stopping + class-balanced CE**; exports TS-runnable weights with a parity assert | 0.91 acc / 0.76 F1 (vs 0.51 rule baseline) |
-| Photo CNN | `ml/train_cnn.py` | 3-conv NumPy CNN (8/16/24 filters) classifying photos into the 8 categories + a severity head; runs in TS too (`src/lib/vision/cnn.ts`) | 0.78 acc, severity MAE 0.20 |
+| Triage SVM | `ml/train.py` | TF-IDF (word+char) + engineered features → calibrated LinearSVC heads for category (8-way) and priority (4-way); trained on **real NYC/Chicago/Boston 311 records** + synthetic corpus | 0.995 cat / 0.991 prio acc |
+| Risk NN | `ml/train_nn.py` | 10→64→32→16→4 MLP (NumPy) trained with **Adam + cosine LR + label smoothing + L2 + dropout + class-balanced CE**; exports TS-runnable weights with a parity assert | 0.897 acc / 0.828 F1 (vs 0.523 rule baseline) |
+| Photo CNN | `ml/train_cnn.py` | 3-conv NumPy CNN (12/24/32 filters) classifying photos into the 8 categories + a severity head; runs in TS too (`src/lib/vision/cnn.ts`) | 0.908 acc / 0.896 F1, severity MAE 0.23 |
 | Forensics | `ml/forensics.py` | EXIF integrity (camera/GPS/timestamp/editor tags), Error-Level Analysis (JPEG re-encode diff), 64-bit DCT pHash | — |
 | Trust fusion | `ml/forensics.py` | Weighted 0–1 evidence trust score: forensics 0.35 · image↔text consistency 0.20 · geolocation 0.15 · crowd 0.15 · source 0.10 · duplicate 0.05; hard caps on reused/edited photos | — |
 | Duplicates | `ml/duplicates.py` | From-scratch TF-IDF cosine + haversine geo factor; coordinated-flooding detector | — |

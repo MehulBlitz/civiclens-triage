@@ -45,9 +45,9 @@ def main() -> None:
         "severity_head": {"W": flat(params["Ws_sev"]), "b": flat(params["bs_sev"])},
         "categories": categories,
         "metrics": {
-            "cnn_accuracy": json.loads(
-                (CNN_PATH.parent / "civic_cnn_report.json").read_text()
-            )["cnn_accuracy"],
+            k: json.loads((CNN_PATH.parent / "civic_cnn_report.json").read_text())[k]
+            for k in ("cnn_accuracy", "cnn_macro_f1", "severity_mae")
+            if k in json.loads((CNN_PATH.parent / "civic_cnn_report.json").read_text())
         },
     }
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)

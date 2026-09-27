@@ -24,6 +24,7 @@ DATA_PATH = Path(__file__).resolve().parent / "data" / "complaints.csv"
 # ---------------------------------------------------------------------------
 
 LOCALITIES = [
+    # Bengaluru-style localities (original corpus)
     "Indiranagar", "Koramangala 4th Block", "HSR Layout Sector 2",
     "Jayanagar 4th T Block", "Whitefield", "Malleshwaram 8th Cross",
     "Rajajinagar 1st Block", "Basavanagudi", "Yelahanka New Town",
@@ -33,6 +34,11 @@ LOCALITIES = [
     "HAL 3rd Stage", "Sanjaynagar", "Sadashivanagar", "Richmond Town",
     "Banaswadi", "Horamavu", "Kalyan Nagar", "Kammanahalli",
     "Jayadeva Junction", "Domlur",
+    # International wards/districts so the corpus generalizes beyond one city
+    # (mirrors the real 311 corpora the model also trains on)
+    "Queens", "Brooklyn", "the Bronx", "Staten Island", "Manhattan",
+    "Ward 14", "Logan Square", "Hyde Park", "South Boston", "Dorchester",
+    "Roxbury", "Jamaica Plain", "Charlestown", "Allston", "Brighton",
 ]
 STREETS = [
     "100ft Road", "27th Main Road", "80ft Road", "5th Cross",
@@ -329,7 +335,63 @@ NOISE_TEMPLATES = [
     "Traffic update: roads busy near the stadium this evening",
     "Match highlights were insane last night, what a finish",
     "Sharing the recipe everyone asked for — 10 minute pasta",
+    "Watching the seasons change from my window, magical time of year",
+    "The library's new reading room is beautiful",
+    "Does anyone know when the farmers market reopens?",
+    "Our team shipped the release two days early, thrilled",
+    "New coffee place near the office roasts their own beans",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Extended template bank (v2) — more phrasing diversity per category so the
+# classifier learns category signal, not template identity.
+# ---------------------------------------------------------------------------
+
+EXTRA_TEMPLATES: dict[str, list] = {
+    "Pothole": [
+        lambda c: f"Reporting a {c['adj']} pothole {c['loc']}. {c['cons']}. Requesting crew dispatch {c['urg']}. — {c['sign']}",
+        lambda c: f"@{c['handle']} day {c['days']} of asking for a repair {c['loc']}. {c['cons']}. {c['tag']}",
+        lambda c: f"The pothole {c['loc']} swallowed a wheel yesterday. {c['cons']}. Where is the asphalt crew?",
+    ],
+    "Drainage": [
+        lambda c: f"Waterlogging {c['loc']} again — the drain grate is buried under silt. {c['cons']}. Desilt before the next rain.",
+        lambda c: f"Dear Municipal Commissioner,\n\nThe culvert {c['loc']} is silted up. {c['cons']}. Please sanction desilting work.\n\nYours truly,\n{c['sign']}",
+        lambda c: f"@{c['handle']} stagnant water {c['loc']} for {c['days']}. {c['cons']}. {c['tag']}",
+    ],
+    "Waste": [
+        lambda c: f"Overflowing dumpsters {c['loc']}. {c['cons']}. Collection schedule needs fixing {c['urg']}.",
+        lambda c: f"Bulk furniture dumped {c['loc']} for {c['days']}. {c['cons']}. Who removes bulk items here?",
+        lambda c: f"No pickup in our lane {c['loc']} since {c['days']}. {c['cons']}. Route complaint filed twice already.",
+    ],
+    "Water": [
+        lambda c: f"Low pressure {c['loc']} in every tap since {c['days']}. {c['cons']}. Please check the valve.",
+        lambda c: f"@{c['handle']} tanker mafia diverting supply {c['loc']}. {c['cons']}. {c['tag']}",
+        lambda c: f"Cloudy water {c['loc']} this morning. {c['cons']}. Requesting quality sampling.",
+    ],
+    "Streetlight": [
+        lambda c: f"The underpass {c['loc']} has zero lighting. {c['cons']}. Women avoid the route after dark.",
+        lambda c: f"@{c['handle']} light pole leaning {c['loc']}, wires exposed. {c['cons']}. Dangerous {c['urg']}.",
+        lambda c: f"Timer fault — lights stay off all night {c['loc']}. {c['cons']}. Reset needed.",
+    ],
+    "Sewage": [
+        lambda c: f"Jetting needed {c['loc']} — the chamber is brimming. {c['cons']}. Send the machine {c['urg']}.",
+        lambda c: f"@{c['handle']} sewer gas smell {c['loc']} for {c['days']}. {c['cons']}. {c['tag']}",
+        lambda c: f"Overflow from the grease trap {c['loc']}. {c['cons']}. Restaurant inspections should cover this.",
+    ],
+    "Graffiti": [
+        lambda c: f"Spray paint across the subway entrance {c['loc']}. {c['cons']}. Anti-graffiti coating would help.",
+        lambda c: f"@{c['handle']} stickers and posters on every signal box {c['loc']}. {c['cons']}. {c['tag']}",
+        lambda c: f"The memorial wall {c['loc']} was defaced overnight. {c['cons']}. This needs sensitive restoration.",
+    ],
+    "Other": [
+        lambda c: f"Construction debris without barricades {c['loc']} after dark. {c['cons']}.",
+        lambda c: f"@{c['handle']} e-rickshaws block the turning {c['loc']} every evening. {c['cons']}. {c['tag']}",
+        lambda c: f"A horn-ban violation cluster {c['loc']} near the hospital. {c['cons']}. Enforcement please.",
+    ],
+}
+for _cat, _tpls in EXTRA_TEMPLATES.items():
+    TEMPLATES[_cat].extend(_tpls)
 
 
 def _perturb(text: str, rng: random.Random) -> str:
@@ -354,7 +416,7 @@ def build_dataset(
     noise: int = 30,
     seed: int = 42,
 ) -> list[dict]:
-    """Build the corpus: `per_category` rows per category + `noise` off-topic rows."""
+    """Build the synthetic corpus: `per_category` rows per category + `noise` off-topic rows."""
     rng = random.Random(seed)
     rows: list[dict] = []
     seen: set[str] = set()
@@ -381,18 +443,66 @@ def build_dataset(
     return rows
 
 
+def build_dataset_from_sources(
+    per_category: int = 150,
+    noise: int = 60,
+    seed: int = 42,
+    real_per_source: int = 1000,
+    use_real: bool = True,
+) -> tuple[list[dict], dict]:
+    """Synthetic corpus merged with real 311 rows (when the portals answer).
+
+    Every row gains a `source_dataset` provenance field. Real rows dominate
+    where they overlap synthetic categories — that is the point — while the
+    synthetic corpus keeps coverage of Hinglish phrasing the US portals lack.
+    """
+    rows = build_dataset(per_category=per_category, noise=noise, seed=seed)
+    for r in rows:
+        r["source_dataset"] = "synthetic"
+    stats: dict = {"synthetic": len(rows)}
+
+    if not use_real:
+        return rows, stats
+    try:
+        from data_sources import write_real_csv  # sibling module
+        path = write_real_csv(per_source=real_per_source)
+        if path and path.exists():
+            real: list[dict] = []
+            with path.open(encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    real.append({
+                        "text": r["text"],
+                        "category": r["category"],
+                        "priority": r["priority"],
+                        "source_dataset": r.get("source_dataset", "real"),
+                    })
+            by_src: dict[str, int] = {}
+            for r in real:
+                by_src[r["source_dataset"]] = by_src.get(r["source_dataset"], 0) + 1
+            stats["real_total"] = len(real)
+            stats["real_by_source"] = by_src
+            rows.extend(real)
+            random.Random(seed + 1).shuffle(rows)
+    except Exception as e:  # noqa: BLE001 — offline training must still work
+        print(f"[generate_dataset] real datasets unavailable ({e}) — synthetic only")
+        stats["real_total"] = 0
+    return rows, stats
+
+
 def write_csv(path: Path = DATA_PATH, rows: list[dict] | None = None) -> Path:
     rows = rows if rows is not None else build_dataset()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["text", "category", "priority"])
+        writer = csv.DictWriter(
+            f, fieldnames=["text", "category", "priority", "source_dataset"]
+        )
         writer.writeheader()
         writer.writerows(rows)
     return path
 
 
 if __name__ == "__main__":
-    rows = build_dataset()
+    rows, stats = build_dataset_from_sources()
     path = write_csv(rows=rows)
     counts: dict[str, int] = {}
     prios: dict[str, int] = {}
@@ -400,5 +510,6 @@ if __name__ == "__main__":
         counts[r["category"]] = counts.get(r["category"], 0) + 1
         prios[r["priority"]] = prios.get(r["priority"], 0) + 1
     print(f"wrote {len(rows)} rows -> {path}")
+    print("provenance:", stats)
     print("by category:", dict(sorted(counts.items())))
     print("by priority:", dict(sorted(prios.items())))

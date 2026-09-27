@@ -44,7 +44,7 @@ N_FEATURES = len(FEATURE_ORDER)
 RISK_LEVELS = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 N_CLASSES = 4
 
-HIDDEN = [32, 16, 8]
+HIDDEN = [64, 32, 16]
 
 # ---------------------------------------------------------------------------
 # Synthetic-but-principled dataset
@@ -201,19 +201,22 @@ def train(
     X: np.ndarray,
     y: np.ndarray,
     seed: int = SEED,
-    epochs: int = 400,
-    lr: float = 0.003,
+    epochs: int = 600,
+    lr: float = 0.004,
     batch: int = 128,
     l2: float = 1e-4,
     dropout: float = 0.1,
     patience: int = 60,
     val_fraction: float = 0.1,
     balanced: bool = True,
+    label_smoothing: float = 0.05,
 ) -> tuple[dict[str, np.ndarray], list[float]]:
-    """Adam + L2 + inverted dropout + early stopping + class-balanced CE.
+    """Adam + L2 + inverted dropout + early stopping + balanced smoothed CE.
 
-    Returns (params, val_loss_history). Early stopping restores the best
-    validation-loss weights, replacing the old fixed-epoch fixed-LR SGD.
+    v2 upgrades: wider trunk (64/32/16), cosine LR decay across the full run,
+    and label smoothing (0.05) so the net calibrates instead of overfitting
+    the expert function's hard thresholds. Early stopping still restores the
+    best validation-loss weights.
     """
     rng = np.random.default_rng(seed)
     mask_rng = np.random.default_rng(seed + 1)
@@ -256,9 +259,12 @@ def train(
             logits = d3 @ params["W3"].T + params["b3"]
 
             probs = softmax(logits)
-            dlogits = probs.copy()
-            dlogits[np.arange(len(idx)), yb] -= 1
-            dlogits *= sw[:, None]  # weighted CE gradient
+            # Label-smoothed, class-weighted CE gradient (still from scratch).
+            y_onehot = np.zeros_like(probs)
+            y_onehot[np.arange(len(idx)), yb] = 1.0
+            if label_smoothing > 0:
+                y_onehot = y_onehot * (1.0 - label_smoothing) + label_smoothing / N_CLASSES
+            dlogits = (probs - y_onehot) * sw[:, None]
 
             grads: dict[str, np.ndarray] = {}
             grads["W3"] = dlogits.T @ d3 / len(idx) + l2 * params["W3"]
@@ -275,7 +281,11 @@ def train(
             grads["b0"] = dh1.mean(axis=0)
 
             t += 1
-            _adam_step(params, grads, m, v, t, lr)
+            # Cosine decay across the whole run (max steps estimate uses the
+            # intended epoch count, not early-stop timing).
+            max_steps = max(1, epochs * max(1, Xt.shape[0] // batch))
+            cur_lr = lr * 0.5 * (1.0 + np.cos(np.pi * min(1.0, t / max_steps)))
+            _adam_step(params, grads, m, v, t, cur_lr)
 
         vl = _val_loss(params, Xv, yv)
         history.append(vl)
@@ -296,16 +306,24 @@ def train(
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--verify", action="store_true", help="run sanity checks")
+    ap.add_argument("--epochs", type=int, default=900)
+    ap.add_argument("--lr", type=float, default=0.005)
+    ap.add_argument("--dropout", type=float, default=0.08)
+    ap.add_argument("--smoothing", type=float, default=0.03)
+    ap.add_argument("--n", type=int, default=12000)
     args = ap.parse_args()
 
-    data = sample_situations(4000, seed=SEED)
+    data = sample_situations(args.n, seed=SEED)
     y = expert_risk(data).astype(int)
     X = normalize_features(data)
 
     split = int(0.8 * len(X))
     Xtr, ytr, Xte, yte = X[:split], y[:split], X[split:], y[split:]
 
-    params, losses = train(Xtr, ytr)
+    params, losses = train(
+        Xtr, ytr, epochs=args.epochs, lr=args.lr,
+        dropout=args.dropout, label_smoothing=args.smoothing,
+    )
 
     _, _, _, logits = forward(Xte, params)
     pred = logits.argmax(axis=1)
@@ -345,7 +363,7 @@ def main() -> None:
         "n_test": int(len(X) - split),
         "epochs": len(losses),
         "optimizer": "adam",
-        "regularization": {"l2": 1e-4, "dropout": 0.15, "early_stopping": True},
+        "regularization": {"l2": 1e-4, "dropout": args.dropout, "label_smoothing": args.smoothing, "early_stopping": True},
         "best_val_loss": round(float(min(losses)), 4) if losses else None,
         "final_loss": round(float(losses[-1]), 4) if losses else None,
         "nn_accuracy": round(nn_acc, 4),
@@ -367,7 +385,7 @@ def main() -> None:
     assert np.allclose(logits_check, logits, atol=1e-6), "forward pass regression"
 
     ts_weights = {
-        "version": 1,
+        "version": 2,
         "architecture": [N_FEATURES, *HIDDEN, N_CLASSES],
         "risk_levels": RISK_LEVELS,
         "feature_order": FEATURE_ORDER,
