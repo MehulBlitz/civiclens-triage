@@ -1,0 +1,228 @@
+{
+  "bundle_version": 4,
+  "trained_at": "2026-09-26 17:24:02",
+  "n_samples": 4222,
+  "dataset_provenance": {
+    "synthetic": 1225,
+    "real_total": 2997,
+    "real_by_source": {
+      "erm2-nwe9": 1000,
+      "v6vf-nfxy": 1000,
+      "254adca6-64ab-4c5c-9fc0-a6da622be185": 997
+    }
+  },
+  "hyperparams": {
+    "category_C": 0.5,
+    "priority_C": 0.5
+  },
+  "category": {
+    "accuracy": 0.9952662721893492,
+    "macro_f1": 0.9919080078309153,
+    "per_class": {
+      "Pothole": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 49
+      },
+      "Drainage": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 30
+      },
+      "Waste": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 136
+      },
+      "Water": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 51
+      },
+      "Streetlight": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 41
+      },
+      "Sewage": {
+        "precision": 1.0,
+        "recall": 0.90625,
+        "f1": 0.9508196721311475,
+        "support": 32
+      },
+      "Graffiti": {
+        "precision": 1.0,
+        "recall": 0.9777777777777777,
+        "f1": 0.9887640449438202,
+        "support": 45
+      },
+      "Other": {
+        "precision": 0.9913978494623656,
+        "recall": 1.0,
+        "f1": 0.9956803455723542,
+        "support": 461
+      }
+    },
+    "confusion_matrix": [
+      [
+        49,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        30,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        136,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        51,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        41,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        29,
+        0,
+        3
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        44,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        461
+      ]
+    ],
+    "confusion_labels": [
+      "Pothole",
+      "Drainage",
+      "Waste",
+      "Water",
+      "Streetlight",
+      "Sewage",
+      "Graffiti",
+      "Other"
+    ],
+    "avg_confidence": 0.9841494846317106
+  },
+  "priority": {
+    "accuracy": 0.9905325443786982,
+    "macro_f1": 0.9886990724433485,
+    "per_class": {
+      "low": {
+        "precision": 0.974025974025974,
+        "recall": 0.9868421052631579,
+        "f1": 0.9803921568627451,
+        "support": 76
+      },
+      "medium": {
+        "precision": 0.9900596421471173,
+        "recall": 0.9979959919839679,
+        "f1": 0.9940119760479041,
+        "support": 499
+      },
+      "high": {
+        "precision": 0.9943181818181818,
+        "recall": 0.9668508287292817,
+        "f1": 0.9803921568627451,
+        "support": 181
+      },
+      "urgent": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 89
+      }
+    },
+    "confusion_matrix": [
+      [
+        75,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        498,
+        1,
+        0
+      ],
+      [
+        2,
+        4,
+        175,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        89
+      ]
+    ],
+    "confusion_labels": [
+      "low",
+      "medium",
+      "high",
+      "urgent"
+    ],
+    "avg_confidence": 0.9850905159940956
+  }
+}

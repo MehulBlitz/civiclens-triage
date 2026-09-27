@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import base64
 import io
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -84,24 +85,33 @@ def load_bundle():
     return _state["bundle"]
 
 
+LOW_MARKERS = [
+    "minor", "small", "cosmetic", "suggestion", "whenever", "no rush",
+]
+HINGLISH_MARKERS = [
+    "gaddha", "nali", "kachra", "paani", "bijli", "kripya", "jaldi",
+    "bhai", "deewar", "saaf", "gir gaye", "ghoomti",
+]
+
+
 def extract_features(texts: list[str]) -> csr_matrix:
     """Dense engineering features stacked next to the TF-IDF vectors.
 
-    Column order must match training (ml/train.py::extract_features).
+    Column order must match training (ml/train.py::extract_features):
+    [length, exclamations, shouting, urgency, severity, low, hinglish, questions].
+    v4 bundles fill every column; the old zero-filled 6/7 skew is gone.
     """
     mat = np.zeros((len(texts), 8), dtype=np.float64)
     for i, t in enumerate(texts):
         low = t.lower()
         mat[i, 0] = min(len(t) / 400.0, 1.0)                 # length
-        mat[i, 1] = min(t.count("!") / 5.0, 1.0)             # excitement
+        mat[i, 1] = min(t.count("!") / 5.0, 1.0)             # exclamations
         mat[i, 2] = sum(ch.isupper() for ch in t) / max(len(t), 1)  # shouting
         mat[i, 3] = sum(1 for m in URGENT_MARKERS if m in low) / 6.0
         mat[i, 4] = sum(1 for m in HIGH_MARKERS if m in low) / 6.0
-        mat[i, 5] = min(t.count("?") / 4.0, 1.0)             # questions
-        # cols 6 and 7 stay zero at serving time — the heads were trained on
-        # the same convention (train.py writes HINGLISH/LOW there but the
-        # serving bundle reproduces train-time behaviour via TF-IDF instead).
-        # NOTE: cols 6/7 must remain zero to match training-time inference.
+        mat[i, 5] = sum(1 for m in LOW_MARKERS if m in low) / 3.0   # low markers
+        mat[i, 6] = sum(1 for m in HINGLISH_MARKERS if m in low) / 3.0  # hinglish
+        mat[i, 7] = min(t.count("?") / 4.0, 1.0)             # questions
     return csr_matrix(mat)
 
 
@@ -154,8 +164,8 @@ class AnomaliesIn(BaseModel):
 
 
 DENSE_FEATURE_NAMES = [
-    "length", "exclamations", "SHOUTING", "urgency markers",
-    "severity markers", "downplay markers", "hinglish markers", "questions",
+    "length", "exclamations", "shouting", "urgency markers",
+    "severity markers", "low markers", "hinglish markers", "questions",
 ]
 
 
@@ -248,6 +258,31 @@ def health():
     try:
         b = load_bundle()
         cnn_ok = CNN_PATH.exists()
+        # Optional richer reports (v4 metrics + CNN report + dataset provenance).
+        cnn_report = {}
+        cnn_report_path = CNN_PATH.parent / "civic_cnn_report.json"
+        if cnn_report_path.exists():
+            try:
+                cnn_report = json.loads(cnn_report_path.read_text())
+            except Exception:  # noqa: BLE001 — health must never fail on a bad report
+                cnn_report = {}
+        cnn_metrics = {
+            k: cnn_report[k]
+            for k in ("cnn_accuracy", "cnn_macro_f1", "severity_mae")
+            if k in cnn_report
+        }
+        metrics = b.get("metrics") or {}
+        if cnn_metrics:
+            metrics = {**metrics, "cnn": cnn_metrics}
+        provenance = {}
+        triage_report_path = CNN_PATH.parent / "triage_metrics.json"
+        if triage_report_path.exists():
+            try:
+                provenance = json.loads(triage_report_path.read_text()).get(
+                    "dataset_provenance", {}
+                )
+            except Exception:  # noqa: BLE001
+                provenance = {}
         return {
             "status": "ok",
             "model_loaded": True,
@@ -255,7 +290,8 @@ def health():
             "version": b.get("version"),
             "trained_at": b.get("trained_at"),
             "n_samples": b.get("n_samples"),
-            "metrics": b.get("metrics"),
+            "metrics": metrics,
+            "dataset_provenance": provenance,
             "capabilities": [
                 "predict", "explain", "vision", "forensics", "trust",
                 "duplicates", "forecast", "anomalies",

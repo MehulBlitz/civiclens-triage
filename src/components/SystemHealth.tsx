@@ -4,7 +4,18 @@ import { useEffect, useState } from "react";
 
 type Health = {
   status: string;
-  ml: { status: string; model_loaded: boolean; version?: number; n_samples?: number; metrics?: { category: { accuracy: number }; priority: { accuracy: number } } };
+  ml: {
+    status: string;
+    model_loaded: boolean;
+    version?: number;
+    n_samples?: number;
+    metrics?: { category: { accuracy: number }; priority: { accuracy: number } };
+    dataset_provenance?: {
+      synthetic?: number;
+      real_total?: number;
+      real_by_source?: Record<string, number>;
+    };
+  };
 };
 
 /**
@@ -40,6 +51,10 @@ export default function SystemHealth() {
   const ok = health?.status === "ok" && health?.ml?.status === "ready";
   const acc = health?.ml?.metrics?.category?.accuracy;
   const samples = health?.ml?.n_samples;
+  const prov = health?.ml?.dataset_provenance;
+  const datasetCount = prov?.real_total
+    ? 1 + Object.keys(prov.real_by_source ?? {}).length
+    : 0;
 
   return (
     <span
@@ -57,7 +72,9 @@ export default function SystemHealth() {
         />
       </span>
       {ok
-        ? `ML live · ${Math.round((acc ?? 0) * 100)}% acc · ${samples ?? "—"} samples`
+        ? `ML live · ${Math.round((acc ?? 0) * 100)}% acc · ${samples ?? "—"} samples${
+            datasetCount > 0 ? ` · ${datasetCount} datasets` : ""
+          }`
         : "System degraded"}
     </span>
   );

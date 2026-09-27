@@ -40,12 +40,13 @@ to the manual-review queue — trust is a routing rule, not a decoration.
 
 | File | Purpose |
 |---|---|
-| `generate_dataset.py` | Synthetic-but-realistic text corpus (tweets, emails, Hinglish) with deterministic severity labels |
-| `train.py` | TF-IDF + engineering features → calibrated LinearSVC heads; saves `models/triage_bundle.joblib` |
-| `train_nn.py` | **Civic Incident Neural Network** — NumPy MLP (10→32→16→8→4) trained with **Adam + L2 + dropout + early stopping + class-balanced CE**; predicts incident risk from 10 engineered features; exports TS weights to `src/lib/nn/weights.json` with a NumPy↔TS parity assert. Held-out: 0.911 acc / 0.761 F1 vs 0.512 rule baseline |
+| `generate_dataset.py` | Synthetic-but-realistic text corpus (tweets, emails, Hinglish) with deterministic severity labels; `build_dataset_from_sources()` merges it with **real 311 records** and tracks per-source provenance |
+| `data_sources.py` | **Real open-data loaders** — NYC 311 (Socrata `erm2-nwe9`), Chicago 311 (Socrata `v6vf-nfxy`), Boston 311 (CKAN datastore); keyword→taxonomy mapping + deterministic priority labeling, paged fetch with JSON caching under `ml/data/cache/` |
+| `train.py` | TF-IDF (word 30k + char 40k) + engineering features → calibrated LinearSVC heads (C tuned on a val grid); trains on synthetic + real 311 data; saves `models/triage_bundle.joblib` + `triage_metrics.json` (per-class F1, confusion matrix, dataset provenance) |
+| `train_nn.py` | **Civic Incident Neural Network** — NumPy MLP (10→64→32→16→4) trained with **Adam + cosine LR decay + label smoothing + L2 + dropout + class-balanced CE**; predicts incident risk from 10 engineered features; exports TS weights to `src/lib/nn/weights.json` with a NumPy↔TS parity assert. Held-out: 0.897 acc / 0.828 F1 vs 0.523 rule baseline |
 | `sweep_nn.py` | Hyperparameter sweep (lr × dropout × L2) for the risk NN |
-| `cnn_data.py` | Procedural photo generator — 8 category visual signatures + severity signal |
-| `train_cnn.py` | **From-scratch NumPy CNN** (Conv 8/16/24 → Dense 64 → 8-way softmax + severity head, hand-written backprop) classifying evidence photos; 0.78 acc, severity MAE 0.20 |
+| `cnn_data.py` | Procedural photo generator (v3) — 8 category visual signatures with mutually-exclusive cues + visibility floors, background/blur/augmentation diversity |
+| `train_cnn.py` | **From-scratch NumPy CNN** (Conv 12/24/32 → Dense 96 → 8-way softmax + severity head, hand-written backprop, flip+shift augmentation) classifying evidence photos; reports per-class accuracy + confusion matrix |
 | `export_cnn_ts.py` | Exports CNN weights to `src/lib/vision/cnn_weights.json` + generates a NumPy↔TS parity probe |
 | `forensics.py` | EXIF integrity (camera/timestamp/GPS/editor tags), **Error-Level Analysis** (JPEG q90 re-encode diff), 64-bit **DCT pHash**, and `compose_trust_score()` — weighted fusion of forensics 0.35 · image↔text consistency 0.20 · geo 0.15 · crowd 0.15 · source 0.10 · duplicate 0.05 with hard caps on reused/edited photos |
 | `duplicates.py` | From-scratch TF-IDF cosine + haversine duplicate detection + coordinated-flooding detector |
@@ -93,11 +94,16 @@ Re-train everything from scratch:
 
 | Head / Model | Accuracy | Macro-F1 | Note |
 |---|---|---|---|
-| Triage category (8-way) | 1.000 | 1.000 | held-out, synthetic corpus |
-| Triage priority (4-way) | 0.940 | 0.938 | held-out |
-| Risk NN (4-way) | 0.911 | 0.761 | Adam+L2+dropout+early-stop, class-balanced |
-| Rule baseline (risk) | 0.512 | — | honest "before" for the NN |
-| Photo CNN (8-way) | 0.785 | 0.770 | procedural photos, severity MAE 0.20 |
+| Triage category (8-way) | 0.995 | 0.992 | held-out, 4,222 rows (2,997 real 311 + 1,225 synthetic) |
+| Triage priority (4-way) | 0.991 | 0.989 | held-out, C tuned per head (grid 0.5–4) |
+| Risk NN (4-way) | 0.897 | 0.828 | Adam+cosine LR+label smoothing+L2+dropout, class-balanced |
+| Rule baseline (risk) | 0.523 | — | honest "before" for the NN |
+| Photo CNN (8-way) | 0.908 | 0.896 | hardened v3 procedural corpus (blur/jitter/visibility floors), severity MAE 0.23; verify gates acc ≥ 0.78, MAE ≤ 0.25 |
+
+Text-triage data provenance: **NYC 311**, **Chicago 311** and **Boston 311** open-data
+records (fetched via Socrata/CKAN into `ml/data/real_complaints.csv`, cached)
+merged with the synthetic corpus — see `dataset_provenance` in
+`ml/models/triage_metrics.json`.
 
 These are pipeline-validation numbers on self-generated data — they prove the
 training/serving/fallback machinery works end-to-end; real-world accuracy
