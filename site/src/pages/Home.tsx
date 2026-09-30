@@ -31,7 +31,7 @@ const FEATURES = [
   },
   {
     title: "Live map and risk engine",
-    body: "Explore geocoded complaints, spatial clusters, flood signals and neural risk scores in the full operations app. The map shows where attention is needed; the risk engine explains why.",
+    body: "Explore geocoded complaints, spatial clusters, flood signals and risk scores. The map shows where attention is needed; the risk engine explains why.",
     tag: "City intelligence",
   },
   {
@@ -152,8 +152,8 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-20">
         <SectionHead
           eyebrow="What makes it CivicLens"
-          title="A triage stack that never needs a server to be useful"
-          sub="The full ML stack lives in the main repo (Python SVM + CNN). This site distills that corpus into a browser-run lexicon — the same taxonomy, routing and SLA math, zero infrastructure."
+          title="A clearer way to get civic problems fixed"
+          sub="Describe an issue, attach evidence, see the category and priority, and follow the public service timeline."
         />
         <div className="grid gap-5 md:grid-cols-2">
           {FEATURES.map((f, i) => (
@@ -201,9 +201,9 @@ export default function Home() {
       {/* ------------------------------------------------ live demo board */}
       <section className="mx-auto max-w-6xl px-4 py-20">
         <SectionHead
-          eyebrow="Live from the demo ward"
+          eyebrow="Live citizen queue"
           title="The queue right now"
-          sub="Seeded Mumbai demo tickets — file a new one and it joins this board instantly."
+          sub="Recent reports, their triage confidence, and the service state visible to citizens."
         />
         <div className="grid gap-4 md:grid-cols-3">
           {tickets.slice(0, 3).map((t, i) => (

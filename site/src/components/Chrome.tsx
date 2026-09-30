@@ -137,10 +137,6 @@ export function Footer() {
             <span className="chip border-saffron-200 bg-saffron-50">BMC corpus v2</span>
           </div>
         </div>
-        <p className="mt-8 text-xs text-tide-400">
-          Public citizen experience · Real ward/zone structure of MCGM ·
-          Administration and OAuth are handled by the full-stack operations app.
-        </p>
       </div>
     </footer>
   );
