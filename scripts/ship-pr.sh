@@ -6,6 +6,7 @@
 #   Usage:  sh ./scripts/ship-pr.sh [branch] [title] [body]
 #           branch defaults to current; title/body default to the last
 #           commit subject/body. Falls back to built-in defaults.
+#   SHIP_NO_MERGE=1 leaves the PR open for review (skips step 4).
 #
 # Idempotent: re-running skips completed steps (existing branch/PR are reused).
 set -eu
@@ -123,6 +124,12 @@ done
 [ "$STATE" = "success" ] || { echo "ERROR: checks did not complete in time (15 min)."; exit 1; }
 
 # 4. Merge (squash). 405 => branch protection / method not allowed.
+#    SHIP_NO_MERGE=1 skips the merge — PR is left open for review.
+if [ -n "${SHIP_NO_MERGE:-}" ]; then
+  echo "==> SHIP_NO_MERGE set — PR #$PR_NUM left open for review:"
+  echo "    https://github.com/$REPO_SLUG/pull/$PR_NUM"
+  exit 0
+fi
 MERGE_TITLE_JSON=$(json_escape "$(printf '%s (#%s)' "$PR_TITLE" "$PR_NUM")")
 CODE=$(gh_req -o /tmp/ship_merge.json -w '%{http_code}' -X PUT \
   "$API/repos/$REPO_SLUG/pulls/$PR_NUM/merge" \
