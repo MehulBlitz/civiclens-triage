@@ -30,6 +30,13 @@ jobs:
       - name: Build
         run: bun run build
         working-directory: site
+        env:
+          # Set this repository variable (Settings → Secrets and variables →
+          # Actions → Variables) to the deployed ML service base URL, e.g.
+          # https://civiclens-ml-production.up.railway.app — the site then
+          # upgrades from the on-device lexicon to the live BMC-trained SVM.
+          # Empty/unset ⇒ site builds in self-contained lexicon mode.
+          VITE_ML_SERVICE_URL: ${{ vars.VITE_ML_SERVICE_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/dist

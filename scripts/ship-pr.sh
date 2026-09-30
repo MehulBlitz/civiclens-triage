@@ -91,7 +91,11 @@ rm -f /tmp/ship_pr.json
 [ -n "$PR_NUM" ] || { echo "ERROR: could not determine PR number"; exit 1; }
 
 # 3. Wait for CI checks on the PR head SHA.
-HEAD_SHA=$(git rev-parse HEAD)
+# Resolve the branch's remote head — NOT the current checkout, which may be
+# a different commit when branches are managed via plumbing/detached tooling.
+HEAD_SHA=$(git rev-parse --verify "refs/remotes/origin/$BRANCH" 2>/dev/null \
+  || git rev-parse --verify "$BRANCH" 2>/dev/null \
+  || git rev-parse HEAD)
 echo "==> Waiting for checks on $HEAD_SHA ..."
 ATTEMPTS=0
 while [ "$ATTEMPTS" -lt 60 ]; do

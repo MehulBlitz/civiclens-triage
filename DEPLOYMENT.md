@@ -37,6 +37,43 @@ layer intentionally degrades to the in-process lexical engine there —
 > classifies. The app never breaks; the queue labels which layer decided
 > (`source_layer`).
 
+### Connecting the real models (the fix for "models aren't connected")
+
+The trained BMC models (SVM bundle + risk NN + photo CNN, v4, n=4822) are
+committed in `ml/models/` and ship in a Docker image that any container host
+can run. **Vercel/Pages cannot run Python** — the service lives on a
+Docker-capable host and both frontends call it over HTTPS:
+
+1. **Deploy the model service (pick one, ~2 minutes):**
+   - **Railway** (recommended): railway.app → New Project → Deploy from
+     GitHub repo → this repo. `railway.json` is preconfigured (Dockerfile at
+     `ml/Dockerfile`, healthcheck `/health`, binds `$PORT`). Generate a
+     public domain under Settings → Networking.
+   - **Render**: Render dashboard → New → Blueprint → this repo → Apply
+     (`render.yaml` is committed). Free tier sleeps after 15 min idle —
+     first request wakes it (~30 s).
+   - **GHCR image**: every push touching `ml/**` builds
+     `ghcr.io/mehulblitz/civiclens-ml:latest` (workflow:
+     `deploy-ml-image.yml`) — runnable on any Docker host.
+   The image bakes the **verified trained artifacts** — no training at
+   build/boot, cold start in seconds, and inference matches the sandbox
+   bit-for-bit.
+2. **Point the Vercel/Freebuff web app at it:** set env `ML_SERVICE_URL`
+   (e.g. `https://civiclens-ml-production.up.railway.app`) in the hosting
+   dashboard. `src/lib/triage/ml.ts`, `/api/insights`, `/api/health` and the
+   vision layer already read it — `/api/health` flips from `degraded` to
+   L1-connected.
+3. **Point the GitHub Pages site at it:** add a repository **variable**
+   (Settings → Secrets and variables → Actions → Variables)
+   `VITE_ML_SERVICE_URL = <service base url>` and re-run
+   `deploy-site-pages.yml`. The Pages build injects it and the site upgrades
+   from the on-device lexicon to the live SVM triage. If the service is
+   unreachable, the site transparently falls back to the browser lexicon and
+   the Report page says which mode decided.
+4. CORS is open (`*`) on the service — it is a public, read-only inference
+   API with no auth surface. Add `allow_origins` pinning if you expose
+   anything stateful later.
+
 ### Vercel (optional secondary)
 The `Deploy Web` workflow triggers an explicit Vercel deploy **only if** you
 configure `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` secrets.
