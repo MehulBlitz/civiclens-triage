@@ -16,7 +16,7 @@ const OPERATIONS = [
   { path: "/channels", label: "Signal channels" },
 ];
 
-const APP_URL = import.meta.env.VITE_APP_URL ?? "https://nextjs-boilerplate-one-lac-zbu1jn70rc.vercel.app";
+const APP_URL = import.meta.env.VITE_APP_URL ?? "";
 
 function Logo() {
   return (
@@ -67,16 +67,16 @@ export function Nav() {
             </NavLink>
           ))}
           {OPERATIONS.map((item) => (
-            <a key={item.path} href={`${APP_URL}${item.path}`} className="min-h-touch rounded-lg px-3 py-2 text-sm font-medium text-tide-700 hover:bg-tide-100">
+            <NavLink key={item.path} to={item.path} className="min-h-touch rounded-lg px-3 py-2 text-sm font-medium text-tide-700 hover:bg-tide-100">
               {item.label}
-            </a>
+            </NavLink>
           ))}
-          <a
-            href={`${APP_URL}/login`}
+          <Link
+            to="/sign-in"
             className="ml-2 min-h-touch rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-sm font-semibold text-saffron-800 transition-colors hover:bg-saffron-100"
           >
             Sign in
-          </a>
+          </Link>
           <span className="ml-2 hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 lg:inline-flex">
             <span ref={dotRef} className="h-2 w-2 rounded-full bg-emerald-500" />
             BMC corpus v2 live
@@ -109,10 +109,10 @@ export function Nav() {
               {l.label}
             </NavLink>
           ))}
-          {OPERATIONS.map((item) => <a key={item.path} href={`${APP_URL}${item.path}`} className="block rounded-lg px-3 py-3 text-sm font-medium text-tide-700">{item.label}</a>)}
-          <a href={`${APP_URL}/login`} className="block rounded-lg border border-saffron-200 bg-saffron-50 px-3 py-3 text-sm font-semibold text-saffron-800">
+          {OPERATIONS.map((item) => <NavLink key={item.path} to={item.path} className="block rounded-lg px-3 py-3 text-sm font-medium text-tide-700">{item.label}</NavLink>)}
+          <Link to="/sign-in" className="block rounded-lg border border-saffron-200 bg-saffron-50 px-3 py-3 text-sm font-semibold text-saffron-800">
             Sign in / Admin access
-          </a>
+          </Link>
         </nav>
       )}
     </header>
