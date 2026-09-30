@@ -2,6 +2,28 @@ import type { NewComplaint } from "./schema";
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000);
 
+/** Karma ledger starter entries — the board is populated from first load. */
+export const SEED_KARMA = [
+  { citizen: "Ananya Deshmukh", action: "report", points: 10, complaintId: 1 },
+  { citizen: "Ananya Deshmukh", action: "photo_evidence", points: 5, complaintId: 1 },
+  { citizen: "Rahul Verma", action: "report", points: 10, complaintId: 3 },
+  { citizen: "Priya Kulkarni", action: "report", points: 10, complaintId: 6 },
+  { citizen: "Sanjay Shinde", action: "cosign", points: 2, complaintId: 6 },
+  { citizen: "Meera Iyer", action: "cosign", points: 2, complaintId: 6 },
+  { citizen: "Rahul Verma", action: "photo_evidence", points: 5, complaintId: 3 },
+  { citizen: "Vikram Rao", action: "resolution_proof", points: 20, complaintId: 7 }
+];
+
+/** Demo municipal field crew (workers table). */
+export const SEED_WORKERS = [
+  { name: "Ramesh Kumar", department: "Roads & Transport", phone: "+91-98450-11001", zone: "East", tasksDone: 34, rating: 4.8 },
+  { name: "Sunita Devi", department: "Sanitation Services", phone: "+91-98450-11002", zone: "South", tasksDone: 51, rating: 4.9 },
+  { name: "Farhan Sheikh", department: "Water & Sewerage", phone: "+91-98450-11003", zone: "Central", tasksDone: 27, rating: 4.6 },
+  { name: "Lakshmi Narayan", department: "Stormwater & Drainage", phone: "+91-98450-11004", zone: "South", tasksDone: 19, rating: 4.5 },
+  { name: "Prakash Yadav", department: "Electricals (Street Lighting)", phone: "+91-98450-11005", zone: "West", tasksDone: 42, rating: 4.7 },
+  { name: "Meena Patil", department: "General Grievance Cell", phone: "+91-98450-11006", zone: "North", tasksDone: 8, rating: 4.4 }
+];
+
 /**
  * Demo data so judges see a populated dashboard instantly.
  * Pre-classified exactly as the pipeline would classify them.

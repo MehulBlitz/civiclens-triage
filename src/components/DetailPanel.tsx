@@ -194,6 +194,32 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
   const [explain, setExplain] = useState<Explain | null>(null);
   const [explainError, setExplainError] = useState<string | null>(null);
   const [showExplain, setShowExplain] = useState(false);
+  const [cosigning, setCosigning] = useState(false);
+  const [cosignNote, setCosignNote] = useState<string | null>(null);
+
+  const cosign = async () => {
+    if (!complaint) return;
+    setCosigning(true);
+    setCosignNote(null);
+    try {
+      const res = await fetch("/api/cosign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaintId: complaint.id })
+      });
+      const data = (await res.json()) as { escalated?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Co-sign failed");
+      setCosignNote(
+        data.escalated
+          ? "⚡ Community signature added — SLA priority escalated to High!"
+          : "You co-signed this grievance (+1 community pressure)"
+      );
+    } catch {
+      setCosignNote("Co-sign failed — try again.");
+    } finally {
+      setCosigning(false);
+    }
+  };
 
   useEffect(() => {
     setExplain(null);
@@ -306,6 +332,9 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
         <div className="rounded-lg border border-civic-100 bg-civic-50 px-3 py-2.5">
           <p className="label text-civic-700">Routed to</p>
           <p className="mt-0.5 text-sm font-bold text-civic-900">{complaint.routeTo}</p>
+          {complaint.assignedWorkerName && (
+            <p className="mt-0.5 text-xs font-semibold text-indigo-700">🔧 Crew: {complaint.assignedWorkerName}</p>
+          )}
           <p className="mt-0.5 text-xs text-civic-700">
             {complaint.locationText || "No location extracted"}{" "}
             {complaint.lat != null && complaint.lng != null
@@ -341,6 +370,30 @@ export default function DetailPanel({ complaint, onStatusChange, saving }: Props
                 style={{ width: `${Math.max(2, Math.round(sla.fraction * 100))}%` }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Community co-sign — petition pressure */}
+        {complaint.status === "open" && (
+          <div className="rounded-lg border border-teal-100 bg-teal-50/60 px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-teal-700">
+                🤝 Community endorsement
+              </p>
+              <span className="text-xs font-black text-teal-800">×{complaint.cosignCount}</span>
+            </div>
+            <p className="mt-1 text-xs text-teal-900">
+              Co-sign to raise visibility — {Math.max(0, 5 - complaint.cosignCount)} more signature{Math.max(0, 5 - complaint.cosignCount) === 1 ? "" : "s"} escalates priority.
+            </p>
+            <button
+              type="button"
+              onClick={() => void cosign()}
+              disabled={cosigning}
+              className="btn-tactile min-h-touch mt-2 w-full border-teal-400 text-xs font-bold text-teal-800 hover:bg-teal-100"
+            >
+              {cosigning ? "Signing…" : "Co-Sign / Support this Grievance (+1)"}
+            </button>
+            {cosignNote && <p className="mt-1.5 text-[11px] font-semibold text-teal-700">{cosignNote}</p>}
           </div>
         )}
 

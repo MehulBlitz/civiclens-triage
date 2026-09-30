@@ -130,6 +130,22 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
                       🛡 {Math.round((c.trustScore ?? 0) * 100)}%
                     </span>
                   )}
+                  {c.cosignCount > 1 && (
+                    <span
+                      className="chip border-teal-200 bg-teal-50 text-teal-700"
+                      title="Community co-signatures — petition pressure"
+                    >
+                      🤝 ×{c.cosignCount}
+                    </span>
+                  )}
+                  {c.verified && (
+                    <span
+                      className="chip border-emerald-300 bg-emerald-100 text-emerald-800"
+                      title={`Verified by ${c.verifiedBy ?? "ward officer"}`}
+                    >
+                      ✓ verified
+                    </span>
+                  )}
                   <span className="ml-auto text-[11px] text-ink-400">
                     {relativeTime(c.createdAt)}
                   </span>
@@ -147,6 +163,11 @@ export default function QueueList({ items, selectedId, onSelect }: Props) {
                     </svg>
                     <span className="truncate">{c.locationText || "No location"}</span>
                   </span>
+                  {c.assignedWorkerName && (
+                    <span className="inline-flex items-center gap-1 font-semibold text-indigo-700" title="Assigned field crew">
+                      🔧 {c.assignedWorkerName}
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 font-semibold text-blue-700">
                     → {c.routeTo}
                   </span>

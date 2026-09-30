@@ -1,4 +1,5 @@
 import {
+  boolean,
   doublePrecision,
   integer,
   pgTable,
@@ -52,6 +53,47 @@ export const complaints = pgTable("complaints", {
   cnnSeverity: doublePrecision("cnn_severity"),
   /** Which stack produced the image signals: python_service | ts_local | unavailable. */
   visionSource: text("vision_source"),
+  /** Optional citizen display name (no auth — karma is a demo ledger). */
+  reporterName: text("reporter_name"),
+  /** -------- Field-ops lifecycle (worker → proof → officer verification) ---- */
+  assignedWorkerId: integer("assigned_worker_id"),
+  assignedWorkerName: text("assigned_worker_name"),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }),
+  /** Resolution proof submitted by the field crew. */
+  resolvedPhotoUrl: text("resolved_photo_url"),
+  resolvedNotes: text("resolved_notes"),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  /** Officer (or auto-policy) sign-off on the proof. */
+  verified: boolean("verified").notNull().default(false),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  verifiedBy: text("verified_by"),
+  /** Civic Karma points awarded to the reporter for this ticket. */
+  karmaAwarded: integer("karma_awarded").notNull().default(0),
+  /** Community co-signatures (petition-style pressure). */
+  cosignCount: integer("cosign_count").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+});
+
+/** Municipal field crew — claimed/assigned tasks reference these rows. */
+export const workers = pgTable("workers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  department: text("department").notNull(),
+  phone: text("phone"),
+  zone: text("zone"),
+  tasksDone: integer("tasks_done").notNull().default(0),
+  rating: doublePrecision("rating").notNull().default(4.5)
+});
+
+/** Civic Karma ledger — every point-earning event is inspectable. */
+export const karmaLedger = pgTable("karma_ledger", {
+  id: serial("id").primaryKey(),
+  citizen: text("citizen").notNull(),
+  action: text("action").notNull(),
+  points: integer("points").notNull(),
+  complaintId: integer("complaint_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow()
@@ -59,3 +101,5 @@ export const complaints = pgTable("complaints", {
 
 export type Complaint = typeof complaints.$inferSelect;
 export type NewComplaint = typeof complaints.$inferInsert;
+export type Worker = typeof workers.$inferSelect;
+export type KarmaEntry = typeof karmaLedger.$inferSelect;

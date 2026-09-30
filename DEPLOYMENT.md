@@ -17,7 +17,8 @@ layer intentionally degrades to the in-process lexical engine there —
 ### Freebuff (primary)
 1. Push this repository to GitHub (see §2), then connect it in Freebuff.
 2. Press **Deploy** once — hosting runs:
-   - install: `bun install` (or `npm ci`)
+   - install: `bun install` (Python/venv intentionally NOT touched — the
+     production builder is Node.js-only, so `setup-ml.sh` must never run there)
    - build: `next build`
    - serve: `sh ./scripts/start-prod.sh` (Next.js on `0.0.0.0:$PORT`)
 3. Set production env vars in the hosting console (Settings → Environment):

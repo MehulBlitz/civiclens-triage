@@ -1,0 +1,58 @@
+version: "3.9"
+
+# CivicLens — full stack with one command:
+#   DATABASE_URL=postgres://civic:civic@db:5432/civic docker compose up --build
+#
+# Services:
+#   db    — Postgres (with pgvector-compatible plain Postgres; Neon not needed)
+#   ml    — Python ML service (trains triage SVM on first boot, serves :8008)
+#   web   — Next.js dashboard + API (:3000)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic
+      POSTGRES_DB: civic
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civic"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ml:
+    build:
+      context: .
+      dockerfile: ml/Dockerfile
+    environment:
+      ML_PORT: "8008"
+    volumes:
+      - mlmodels:/ml/models
+    ports:
+      - "8008:8008"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8008/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://civic:civic@db:5432/civic
+      ML_SERVICE_URL: http://ml:8008
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  mlmodels:

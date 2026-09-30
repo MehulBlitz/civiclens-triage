@@ -1,0 +1,1019 @@
+{
+ "version": 2,
+ "dataset": "bmc_mumbai_v1",
+ "provenance": {
+  "bmc_manual": 0,
+  "bmc_datagov": 0,
+  "bmc_synthetic": 600
+ },
+ "categories": [
+  "Pothole",
+  "Drainage",
+  "Waste",
+  "Water",
+  "Streetlight",
+  "Sewage",
+  "Graffiti",
+  "Other"
+ ],
+ "department": {
+  "Pothole": "Roads & Traffic",
+  "Drainage": "Storm Water Drains",
+  "Waste": "Solid Waste Management",
+  "Water": "Hydraulic Engineering",
+  "Streetlight": "Electric (Street Lights)",
+  "Sewage": "Sewerage Operations",
+  "Graffiti": "Urban Maintenance",
+  "Other": "Ward Office (General)"
+ },
+ "slaHours": {
+  "urgent": 24,
+  "high": 72,
+  "medium": 168,
+  "low": 336
+ },
+ "categorySlaHours": {
+  "Sewage": 24,
+  "Drainage": 72,
+  "Pothole": 72,
+  "Water": 48,
+  "Streetlight": 96,
+  "Waste": 48,
+  "Graffiti": 336,
+  "Other": 168
+ },
+ "priority": {
+  "urgent": [
+   "urgent",
+   "emergency",
+   "accident",
+   "bike skid",
+   "two-wheeler slipped",
+   "school children",
+   "hospital",
+   "unsafe",
+   "health hazard",
+   "immediately",
+   "today itself",
+   "live wire",
+   "electrocut",
+   "gir gaye",
+   "life risk",
+   "collapse",
+   "monsoon starting",
+   "high tide"
+  ],
+  "high": [
+   "blocked",
+   "choked",
+   "overflow",
+   "overflowing",
+   "burst",
+   "waterlogged",
+   "flood",
+   "flooded",
+   "gushing",
+   "huge",
+   "massive",
+   "deep",
+   "weeks",
+   "ten days",
+   "no water",
+   "contaminated",
+   "smell",
+   "mosquito",
+   "dengue",
+   "stray dog",
+   "entire lane",
+   "whole building"
+  ],
+  "low": [
+   "minor",
+   "small",
+   "cosmetic",
+   "whenever possible",
+   "no rush",
+   "request only"
+  ]
+ },
+ "lexicons": {
+  "Pothole": [
+   {
+    "w": "action",
+    "s": 6.0
+   },
+   {
+    "w": "craters",
+    "s": 6.0
+   },
+   {
+    "w": "knee",
+    "s": 6.0
+   },
+   {
+    "w": "surface",
+    "s": 6.0
+   },
+   {
+    "w": "broken",
+    "s": 6.0
+   },
+   {
+    "w": "deep",
+    "s": 6.0
+   },
+   {
+    "w": "bmc",
+    "s": 6.0
+   },
+   {
+    "w": "series",
+    "s": 6.0
+   },
+   {
+    "w": "vehicles",
+    "s": 6.0
+   },
+   {
+    "w": "punctured",
+    "s": 6.0
+   },
+   {
+    "w": "potholes",
+    "s": 6.0
+   },
+   {
+    "w": "alone",
+    "s": 6.0
+   },
+   {
+    "w": "repair",
+    "s": 6.0
+   },
+   {
+    "w": "before",
+    "s": 6.0
+   },
+   {
+    "w": "drivers",
+    "s": 6.0
+   },
+   {
+    "w": "hour",
+    "s": 6.0
+   },
+   {
+    "w": "skid",
+    "s": 6.0
+   },
+   {
+    "w": "pothole",
+    "s": 6.0
+   },
+   {
+    "w": "during",
+    "s": 6.0
+   },
+   {
+    "w": "wheelers",
+    "s": 6.0
+   },
+   {
+    "w": "huge",
+    "s": 6.0
+   },
+   {
+    "w": "evening",
+    "s": 6.0
+   },
+   {
+    "w": "needs",
+    "s": 6.0
+   },
+   {
+    "w": "patch",
+    "s": 6.0
+   },
+   {
+    "w": "crater",
+    "s": 6.0
+   },
+   {
+    "w": "filled",
+    "s": 6.0
+   },
+   {
+    "w": "city",
+    "s": 6.0
+   },
+   {
+    "w": "proper",
+    "s": 6.0
+   }
+  ],
+  "Drainage": [
+   {
+    "w": "nowhere",
+    "s": 6.0
+   },
+   {
+    "w": "catchpit",
+    "s": 6.0
+   },
+   {
+    "w": "go",
+    "s": 6.0
+   },
+   {
+    "w": "desilting",
+    "s": 6.0
+   },
+   {
+    "w": "silted",
+    "s": 6.0
+   },
+   {
+    "w": "wade",
+    "s": 6.0
+   },
+   {
+    "w": "reach",
+    "s": 6.0
+   },
+   {
+    "w": "kids",
+    "s": 6.0
+   },
+   {
+    "w": "through",
+    "s": 6.0
+   },
+   {
+    "w": "floods",
+    "s": 6.0
+   },
+   {
+    "w": "drain",
+    "s": 6.0
+   },
+   {
+    "w": "high",
+    "s": 6.0
+   },
+   {
+    "w": "debris",
+    "s": 6.0
+   },
+   {
+    "w": "storm",
+    "s": 6.0
+   },
+   {
+    "w": "tide",
+    "s": 6.0
+   },
+   {
+    "w": "drainage",
+    "s": 6.0
+   },
+   {
+    "w": "logging",
+    "s": 6.0
+   },
+   {
+    "w": "time",
+    "s": 6.0
+   },
+   {
+    "w": "rains",
+    "s": 6.0
+   },
+   {
+    "w": "de",
+    "s": 6.0
+   },
+   {
+    "w": "dirty",
+    "s": 6.0
+   },
+   {
+    "w": "silting",
+    "s": 6.0
+   },
+   {
+    "w": "requested",
+    "s": 6.0
+   },
+   {
+    "w": "p",
+    "s": 6.0
+   },
+   {
+    "w": "choked",
+    "s": 5.86
+   },
+   {
+    "w": "l",
+    "s": 5.71
+   },
+   {
+    "w": "nal",
+    "s": 5.71
+   },
+   {
+    "w": "western",
+    "s": 5.71
+   }
+  ],
+  "Waste": [
+   {
+    "w": "kachra",
+    "s": 6.0
+   },
+   {
+    "w": "garbage",
+    "s": 6.0
+   },
+   {
+    "w": "collected",
+    "s": 6.0
+   },
+   {
+    "w": "bins",
+    "s": 6.0
+   },
+   {
+    "w": "waste",
+    "s": 6.0
+   },
+   {
+    "w": "scattering",
+    "s": 6.0
+   },
+   {
+    "w": "enforce",
+    "s": 6.0
+   },
+   {
+    "w": "dumped",
+    "s": 6.0
+   },
+   {
+    "w": "sanitation",
+    "s": 6.0
+   },
+   {
+    "w": "nightly",
+    "s": 6.0
+   },
+   {
+    "w": "meat",
+    "s": 6.0
+   },
+   {
+    "w": "d",
+    "s": 6.0
+   },
+   {
+    "w": "household",
+    "s": 6.0
+   },
+   {
+    "w": "mosquito",
+    "s": 6.0
+   },
+   {
+    "w": "lifted",
+    "s": 6.0
+   },
+   {
+    "w": "started",
+    "s": 6.0
+   },
+   {
+    "w": "point",
+    "s": 6.0
+   },
+   {
+    "w": "breeding",
+    "s": 6.0
+   },
+   {
+    "w": "unbearable",
+    "s": 6.0
+   },
+   {
+    "w": "piling",
+    "s": 6.0
+   },
+   {
+    "w": "swm",
+    "s": 6.0
+   },
+   {
+    "w": "because",
+    "s": 6.0
+   },
+   {
+    "w": "skips",
+    "s": 6.0
+   },
+   {
+    "w": "round",
+    "s": 5.4
+   },
+   {
+    "w": "construction",
+    "s": 4.55
+   },
+   {
+    "w": "dumping",
+    "s": 4.55
+   },
+   {
+    "w": "mixed",
+    "s": 4.05
+   },
+   {
+    "w": "smell",
+    "s": 3.57
+   }
+  ],
+  "Water": [
+   {
+    "w": "leak",
+    "s": 6.0
+   },
+   {
+    "w": "report",
+    "s": 6.0
+   },
+   {
+    "w": "reply",
+    "s": 6.0
+   },
+   {
+    "w": "valve",
+    "s": 6.0
+   },
+   {
+    "w": "litres",
+    "s": 6.0
+   },
+   {
+    "w": "thousands",
+    "s": 6.0
+   },
+   {
+    "w": "wasting",
+    "s": 6.0
+   },
+   {
+    "w": "pressure",
+    "s": 6.0
+   },
+   {
+    "w": "low",
+    "s": 6.0
+   },
+   {
+    "w": "supply",
+    "s": 6.0
+   },
+   {
+    "w": "get",
+    "s": 6.0
+   },
+   {
+    "w": "connection",
+    "s": 6.0
+   },
+   {
+    "w": "falling",
+    "s": 6.0
+   },
+   {
+    "w": "sick",
+    "s": 6.0
+   },
+   {
+    "w": "contaminated",
+    "s": 6.0
+   },
+   {
+    "w": "yellowish",
+    "s": 6.0
+   },
+   {
+    "w": "burst",
+    "s": 6.0
+   },
+   {
+    "w": "pipeline",
+    "s": 6.0
+   },
+   {
+    "w": "gushing",
+    "s": 6.0
+   },
+   {
+    "w": "hydraulic",
+    "s": 6.0
+   },
+   {
+    "w": "dept",
+    "s": 6.0
+   },
+   {
+    "w": "hours",
+    "s": 6.0
+   },
+   {
+    "w": "close",
+    "s": 6.0
+   },
+   {
+    "w": "building",
+    "s": 6.0
+   },
+   {
+    "w": "dry",
+    "s": 6.0
+   },
+   {
+    "w": "taps",
+    "s": 6.0
+   },
+   {
+    "w": "new",
+    "s": 5.51
+   },
+   {
+    "w": "smell",
+    "s": 5.0
+   }
+  ],
+  "Streetlight": [
+   {
+    "w": "lamp",
+    "s": 6.0
+   },
+   {
+    "w": "unlit",
+    "s": 6.0
+   },
+   {
+    "w": "ranade",
+    "s": 6.0
+   },
+   {
+    "w": "whole",
+    "s": 6.0
+   },
+   {
+    "w": "working",
+    "s": 6.0
+   },
+   {
+    "w": "posts",
+    "s": 6.0
+   },
+   {
+    "w": "streetlight",
+    "s": 6.0
+   },
+   {
+    "w": "s",
+    "s": 6.0
+   },
+   {
+    "w": "exposed",
+    "s": 6.0
+   },
+   {
+    "w": "dangerously",
+    "s": 6.0
+   },
+   {
+    "w": "night",
+    "s": 6.0
+   },
+   {
+    "w": "leaning",
+    "s": 6.0
+   },
+   {
+    "w": "live",
+    "s": 6.0
+   },
+   {
+    "w": "wire",
+    "s": 6.0
+   },
+   {
+    "w": "v",
+    "s": 6.0
+   },
+   {
+    "w": "dark",
+    "s": 6.0
+   },
+   {
+    "w": "pm",
+    "s": 6.0
+   },
+   {
+    "w": "dead",
+    "s": 6.0
+   },
+   {
+    "w": "pitch",
+    "s": 6.0
+   },
+   {
+    "w": "women",
+    "s": 6.0
+   },
+   {
+    "w": "avoid",
+    "s": 6.0
+   },
+   {
+    "w": "light",
+    "s": 6.0
+   },
+   {
+    "w": "led",
+    "s": 6.0
+   },
+   {
+    "w": "goes",
+    "s": 6.0
+   },
+   {
+    "w": "panel",
+    "s": 6.0
+   },
+   {
+    "w": "fittings",
+    "s": 6.0
+   },
+   {
+    "w": "off",
+    "s": 6.0
+   },
+   {
+    "w": "flickering",
+    "s": 6.0
+   }
+  ],
+  "Sewage": [
+   {
+    "w": "jaldi",
+    "s": 6.0
+   },
+   {
+    "w": "dekho",
+    "s": 6.0
+   },
+   {
+    "w": "kripya",
+    "s": 6.0
+   },
+   {
+    "w": "hazard",
+    "s": 6.0
+   },
+   {
+    "w": "health",
+    "s": 6.0
+   },
+   {
+    "w": "drinking",
+    "s": 6.0
+   },
+   {
+    "w": "mixing",
+    "s": 6.0
+   },
+   {
+    "w": "nahi",
+    "s": 6.0
+   },
+   {
+    "w": "raw",
+    "s": 6.0
+   },
+   {
+    "w": "manhole",
+    "s": 6.0
+   },
+   {
+    "w": "urgent",
+    "s": 6.0
+   },
+   {
+    "w": "risk",
+    "s": 6.0
+   },
+   {
+    "w": "dengue",
+    "s": 6.0
+   },
+   {
+    "w": "complaints",
+    "s": 6.0
+   },
+   {
+    "w": "without",
+    "s": 6.0
+   },
+   {
+    "w": "still",
+    "s": 6.0
+   },
+   {
+    "w": "pass",
+    "s": 6.0
+   },
+   {
+    "w": "cover",
+    "s": 6.0
+   },
+   {
+    "w": "itself",
+    "s": 6.0
+   },
+   {
+    "w": "sewer",
+    "s": 6.0
+   },
+   {
+    "w": "suction",
+    "s": 6.0
+   },
+   {
+    "w": "bathrooms",
+    "s": 6.0
+   },
+   {
+    "w": "use",
+    "s": 6.0
+   },
+   {
+    "w": "today",
+    "s": 6.0
+   },
+   {
+    "w": "floor",
+    "s": 6.0
+   },
+   {
+    "w": "ground",
+    "s": 6.0
+   },
+   {
+    "w": "backing",
+    "s": 6.0
+   },
+   {
+    "w": "toilets",
+    "s": 6.0
+   }
+  ],
+  "Graffiti": [
+   {
+    "w": "banners",
+    "s": 6.0
+   },
+   {
+    "w": "flex",
+    "s": 6.0
+   },
+   {
+    "w": "covering",
+    "s": 6.0
+   },
+   {
+    "w": "boards",
+    "s": 6.0
+   },
+   {
+    "w": "festival",
+    "s": 6.0
+   },
+   {
+    "w": "wall",
+    "s": 6.0
+   },
+   {
+    "w": "stickers",
+    "s": 6.0
+   },
+   {
+    "w": "add",
+    "s": 6.0
+   },
+   {
+    "w": "shelter",
+    "s": 6.0
+   },
+   {
+    "w": "weekly",
+    "s": 6.0
+   },
+   {
+    "w": "defaced",
+    "s": 6.0
+   },
+   {
+    "w": "residents",
+    "s": 6.0
+   },
+   {
+    "w": "cosmetic",
+    "s": 6.0
+   },
+   {
+    "w": "pillar",
+    "s": 6.0
+   },
+   {
+    "w": "paint",
+    "s": 6.0
+   },
+   {
+    "w": "spray",
+    "s": 6.0
+   },
+   {
+    "w": "want",
+    "s": 6.0
+   },
+   {
+    "w": "cleaned",
+    "s": 6.0
+   },
+   {
+    "w": "sprayed",
+    "s": 6.0
+   },
+   {
+    "w": "maintenance",
+    "s": 6.0
+   },
+   {
+    "w": "graffiti",
+    "s": 6.0
+   },
+   {
+    "w": "urban",
+    "s": 6.0
+   },
+   {
+    "w": "repaint",
+    "s": 6.0
+   },
+   {
+    "w": "them",
+    "s": 6.0
+   },
+   {
+    "w": "sponsors",
+    "s": 6.0
+   },
+   {
+    "w": "fine",
+    "s": 6.0
+   },
+   {
+    "w": "posters",
+    "s": 6.0
+   },
+   {
+    "w": "visible",
+    "s": 6.0
+   }
+  ],
+  "Other": [
+   {
+    "w": "more",
+    "s": 5.45
+   },
+   {
+    "w": "benches",
+    "s": 5.45
+   },
+   {
+    "w": "suggestion",
+    "s": 5.45
+   },
+   {
+    "w": "tree",
+    "s": 5.45
+   },
+   {
+    "w": "expected",
+    "s": 5.45
+   },
+   {
+    "w": "wind",
+    "s": 5.45
+   },
+   {
+    "w": "hanging",
+    "s": 5.45
+   },
+   {
+    "w": "branch",
+    "s": 5.45
+   },
+   {
+    "w": "weekend",
+    "s": 5.45
+   },
+   {
+    "w": "letter",
+    "s": 5.45
+   },
+   {
+    "w": "objection",
+    "s": 5.45
+   },
+   {
+    "w": "renovation",
+    "s": 5.45
+   },
+   {
+    "w": "pack",
+    "s": 5.45
+   },
+   {
+    "w": "dog",
+    "s": 5.45
+   },
+   {
+    "w": "menace",
+    "s": 5.45
+   },
+   {
+    "w": "chases",
+    "s": 5.45
+   },
+   {
+    "w": "compliment",
+    "s": 5.45
+   },
+   {
+    "w": "work",
+    "s": 5.45
+   },
+   {
+    "w": "great",
+    "s": 5.45
+   },
+   {
+    "w": "finally",
+    "s": 5.45
+   },
+   {
+    "w": "enter",
+    "s": 5.45
+   },
+   {
+    "w": "parking",
+    "s": 5.45
+   },
+   {
+    "w": "choking",
+    "s": 5.45
+   },
+   {
+    "w": "fire",
+    "s": 5.45
+   },
+   {
+    "w": "tender",
+    "s": 5.45
+   },
+   {
+    "w": "abandoned",
+    "s": 5.45
+   },
+   {
+    "w": "tyres",
+    "s": 5.45
+   },
+   {
+    "w": "vehicle",
+    "s": 5.45
+   }
+  ]
+ },
+ "metrics": {
+  "evalRows": 75,
+  "categoryAccuracy": 1.0,
+  "priorityAccuracy": 1.0,
+  "note": "Held-out slice of the BMC/Mumbai corpus; client-side distilled classifier."
+ }
+}
