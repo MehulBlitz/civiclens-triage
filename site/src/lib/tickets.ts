@@ -9,7 +9,7 @@
  * single-device".
  */
 import { classify, slaHoursFor, type Priority } from "./triage";
-import { WARDS } from "./wards";
+import { WARD_COORDINATES, WARDS } from "./wards";
 
 export type Status = "open" | "assigned" | "in_progress" | "resolved" | "verified";
 
@@ -22,6 +22,8 @@ export type Ticket = {
   status: Status;
   ward: string;
   location: string;
+  lat: number;
+  lng: number;
   reporter: string;
   createdAt: number;
   confidence: number;
@@ -67,6 +69,7 @@ function buildSeed(): Ticket[] {
       status: s.status,
       ward: s.ward,
       location: s.loc,
+      ...WARD_COORDINATES[s.ward],
       reporter: REPORTERS[i % REPORTERS.length],
       createdAt,
       confidence: tri.confidence,
@@ -86,7 +89,7 @@ export function loadTickets(): Ticket[] {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as { tickets: Ticket[]; nextId: number };
-      return parsed.tickets;
+      return parsed.tickets.map((ticket) => ({ ...ticket, ...(WARD_COORDINATES[ticket.ward] ?? WARD_COORDINATES.A) }));
     }
   } catch {
     /* first run */
@@ -122,6 +125,7 @@ export function fileTicket(
     status: "open",
     ward: input.ward,
     location: input.location,
+    ...(WARD_COORDINATES[input.ward] ?? WARD_COORDINATES.A),
     reporter: input.reporter || "Anonymous citizen",
     createdAt: now,
     confidence: tri.confidence,
