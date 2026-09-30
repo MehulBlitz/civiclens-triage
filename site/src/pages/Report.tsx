@@ -1,11 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useReveal, revealDelay } from "../lib/reveal";
 import { Reveal, SectionHead, Chip, Meter } from "../components/Reveal";
-import { classify, analyzePhoto, LEXICON_METRICS, type TriageResult, type VisionPreview } from "../lib/triage";
+import { classify, analyzePhoto, LEXICON_METRICS, departmentFor, slaHoursFor, type TriageResult, type VisionPreview } from "../lib/triage";
+import { classifyLive, analyzePhotoLive, ML_LIVE, type LiveModelResult } from "../lib/mlBridge";
 import { WARDS } from "../lib/wards";
 import { useTickets } from "../state";
-import { slaHoursFor } from "../lib/triage";
 
 const EXAMPLES = [
   "Huge pothole near Sakinaka signal, bikes skidding every evening, urgent",
@@ -28,6 +28,35 @@ export default function Report() {
   const triage: TriageResult = useMemo(() => classify(text), [text]);
   const dirty = text.trim().length > 0;
 
+  // Live-model uplift (Railway/Render service). Debounced; never blocks or
+  // breaks the form — on any failure `live` carries the local classification.
+  const [live, setLive] = useState<LiveModelResult | null>(null);
+  useEffect(() => {
+    if (!text.trim()) {
+      setLive(null);
+      return;
+    }
+    let active = true;
+    const t = window.setTimeout(async () => {
+      const r = await classifyLive(text);
+      if (active) setLive(r);
+    }, 350);
+    return () => {
+      active = false;
+      window.clearTimeout(t);
+    };
+  }, [text]);
+
+  const usingLive = live?.sourceLayer === "live_ml";
+  const view = usingLive
+    ? {
+        category: live.category,
+        priority: live.priority,
+        confidence: live.confidence,
+        department: departmentFor(live.category),
+      }
+    : triage;
+
   async function onPhoto(f: File | null) {
     setPhoto(f);
     if (!f) {
@@ -35,6 +64,10 @@ export default function Report() {
       return;
     }
     setVision(await analyzePhoto(f));
+    const sevLive = await analyzePhotoLive(f);
+    if (sevLive !== null) {
+      setVision((v) => (v ? { ...v, severity: sevLive, note: "Severity from the live BMC-trained CNN" } : v));
+    }
   }
 
   function submit(e: React.FormEvent) {
@@ -48,7 +81,7 @@ export default function Report() {
     setVision(null);
   }
 
-  const slaH = slaHoursFor(triage.category, triage.priority);
+  const slaH = slaHoursFor(view.category, view.priority);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-14">
@@ -178,7 +211,7 @@ export default function Report() {
           <div className="well sticky top-20 p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold text-tide-950">Live triage</h2>
-              <Chip tone={triage.priority}>{triage.priority.toUpperCase()}</Chip>
+              <Chip tone={view.priority}>{view.priority.toUpperCase()}</Chip>
             </div>
 
             {dirty ? (
@@ -186,19 +219,19 @@ export default function Report() {
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg bg-tide-50 p-3">
                     <div className="text-[10px] uppercase tracking-wide text-tide-500">Category</div>
-                    <div className="font-semibold text-tide-900">{triage.category}</div>
+                    <div className="font-semibold text-tide-900">{view.category}</div>
                   </div>
                   <div className="rounded-lg bg-tide-50 p-3">
                     <div className="text-[10px] uppercase tracking-wide text-tide-500">Routes to</div>
-                    <div className="font-semibold text-tide-900">{triage.department}</div>
+                    <div className="font-semibold text-tide-900">{view.department}</div>
                   </div>
                 </div>
 
                 <div className="mt-4">
                   <Meter
-                    pct={triage.confidence * 100}
-                    tone={triage.sourceLayer === "lexicon" ? "emerald" : triage.sourceLayer === "rules" ? "tide" : "rose"}
-                    label={`confidence ${Math.round(triage.confidence * 100)}% · decided by ${triage.sourceLayer}`}
+                    pct={view.confidence * 100}
+                    tone={usingLive ? "emerald" : triage.sourceLayer === "lexicon" ? "emerald" : triage.sourceLayer === "rules" ? "tide" : "rose"}
+                    label={`confidence ${Math.round(view.confidence * 100)}% · decided by ${usingLive ? "L1 live SVM" : triage.sourceLayer}`}
                   />
                 </div>
 
@@ -219,6 +252,13 @@ export default function Report() {
                   SLA clock: <strong>{slaH}h</strong> for this category/priority. Held-out BMC
                   corpus accuracy: {Math.round((LEXICON_METRICS.categoryAccuracy ?? 0) * 100)}% category ·{" "}
                   {Math.round((LEXICON_METRICS.priorityAccuracy ?? 0) * 100)}% priority.
+                </p>
+                <p className={`mt-2 rounded-lg px-3 py-2 text-xs ${usingLive ? "bg-emerald-50 text-emerald-700" : "bg-saffron-50 text-saffron-800"}`}>
+                  {usingLive
+                    ? `Connected to the live BMC-trained model service — full SVM triage. (${live.modelUrl})`
+                    : ML_LIVE
+                      ? "Live model unreachable — using the on-device BMC lexicon."
+                      : "Browser lexicon mode. Deploy the ML service and set VITE_ML_SERVICE_URL to enable live SVM triage."}
                 </p>
               </>
             ) : (

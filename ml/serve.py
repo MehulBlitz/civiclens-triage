@@ -55,6 +55,17 @@ HIGH_MARKERS = [
 
 app = FastAPI(title="CivicLens Triage ML", version="2.0.0")
 
+# The model service is called cross-origin by the Vercel dashboard and the
+# static GitHub Pages site — CORS must allow those public frontends.
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # public read-only inference API; no auth surface
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 _state = {"bundle": None, "cnn": None}
 
 # Layers used by the CNN (mirror of train_cnn.py) — loaded lazily.

@@ -1,0 +1,16 @@
+# One-click deploy config for the CivicLens ML model service (Render).
+# Uses the committed trained models — no training at build or boot.
+#
+# Deploy: Render dashboard → New → Blueprint → pick this repo → Apply.
+# The service URL (https://civiclens-ml-xxxx.onrender.com) is then the value
+# for ML_SERVICE_URL (Vercel) and VITE_ML_SERVICE_URL (site Pages build).
+
+services:
+  - type: web
+    name: civiclens-ml
+    runtime: docker
+    dockerfilePath: ./ml/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
