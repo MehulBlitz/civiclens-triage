@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb, bootstrapDb, DbUnavailableError } from "@/lib/db";
 import { complaints } from "@/lib/schema";
 import { STATUSES } from "@/lib/civic";
+import { requireAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.user) {
+    return NextResponse.json({ error: "Administrator sign-in required" }, { status: auth.status });
+  }
   const id = Number(params.id);
   if (!Number.isInteger(id)) {
     return NextResponse.json({ error: "Invalid complaint id" }, { status: 400 });

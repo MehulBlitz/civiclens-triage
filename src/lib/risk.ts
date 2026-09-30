@@ -19,7 +19,7 @@ import { getWeather, type WeatherSnapshot } from "./weather";
 
 export type RiskSituation = {
   id: string;
-  /** Cluster representative = highest-priority open complaint in the area. */
+  /** Cluster anchor = highest-priority open complaint in the area. */
   anchor: Complaint;
   memberIds: number[];
   complaintCount: number;

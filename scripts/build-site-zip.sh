@@ -23,7 +23,7 @@ echo "== packaging =="
 STAGE="$(mktemp -d)"
 mkdir -p "$STAGE/site-source"
 cp -r site/src site/public site/index.html site/package.json site/tsconfig.json \
-      site/vite.config.ts site/tailwind.config.ts site/.gitignore "$STAGE/site-source/"
+      site/vite.config.ts site/tailwind.config.ts site/postcss.config.js site/.gitignore "$STAGE/site-source/"
 cp -r site/dist "$STAGE/dist"
 cp site/README.md "$STAGE/README.md" 2>/dev/null || true
 

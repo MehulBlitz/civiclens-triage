@@ -99,7 +99,39 @@ export const karmaLedger = pgTable("karma_ledger", {
     .defaultNow()
 });
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  avatarUrl: text("avatar_url"),
+  provider: text("provider").notNull().default("google"),
+  role: text("role").notNull().default("citizen"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true })
+});
+
+export const sessions = pgTable("sessions", {
+  token: text("token").primaryKey(),
+  userId: integer("user_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull()
+});
+
+export const wards = pgTable("wards", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  zone: text("zone").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+});
+
+
 export type Complaint = typeof complaints.$inferSelect;
 export type NewComplaint = typeof complaints.$inferInsert;
 export type Worker = typeof workers.$inferSelect;
 export type KarmaEntry = typeof karmaLedger.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type Ward = typeof wards.$inferSelect;

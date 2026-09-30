@@ -7,8 +7,6 @@ import { useReveal } from "./lib/reveal";
 import { Nav, Footer } from "./components/Chrome";
 
 const Home = React.lazy(() => import("./pages/Home"));
-const Directory = React.lazy(() => import("./pages/Directory"));
-const Profile = React.lazy(() => import("./pages/Profile"));
 const Report = React.lazy(() => import("./pages/Report"));
 const Track = React.lazy(() => import("./pages/Track"));
 const Karma = React.lazy(() => import("./pages/Karma"));
@@ -30,8 +28,6 @@ function App() {
             >
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/nagarsevak" element={<Directory />} />
-                <Route path="/nagarsevak/:id" element={<Profile />} />
                 <Route path="/report" element={<Report />} />
                 <Route path="/track" element={<Track />} />
                 <Route path="/track/:id" element={<Track />} />

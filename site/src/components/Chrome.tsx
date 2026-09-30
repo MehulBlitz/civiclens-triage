@@ -4,11 +4,19 @@ import { pulseDot } from "../lib/anime";
 
 const LINKS = [
   { to: "/", label: "Home" },
-  { to: "/nagarsevak", label: "Nagarsevak" },
   { to: "/report", label: "Report" },
   { to: "/track", label: "Track" },
   { to: "/karma", label: "Karma" },
 ];
+
+const OPERATIONS = [
+  { path: "/map", label: "Live map" },
+  { path: "/risk", label: "Risk engine" },
+  { path: "/insights", label: "Insights" },
+  { path: "/channels", label: "Signal channels" },
+];
+
+const APP_URL = import.meta.env.VITE_APP_URL ?? "https://nextjs-boilerplate-one-lac-zbu1jn70rc.vercel.app";
 
 function Logo() {
   return (
@@ -58,6 +66,17 @@ export function Nav() {
               {l.label}
             </NavLink>
           ))}
+          {OPERATIONS.map((item) => (
+            <a key={item.path} href={`${APP_URL}${item.path}`} className="min-h-touch rounded-lg px-3 py-2 text-sm font-medium text-tide-700 hover:bg-tide-100">
+              {item.label}
+            </a>
+          ))}
+          <a
+            href={`${APP_URL}/login`}
+            className="ml-2 min-h-touch rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-sm font-semibold text-saffron-800 transition-colors hover:bg-saffron-100"
+          >
+            Sign in
+          </a>
           <span className="ml-2 hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 lg:inline-flex">
             <span ref={dotRef} className="h-2 w-2 rounded-full bg-emerald-500" />
             BMC corpus v2 live
@@ -90,6 +109,10 @@ export function Nav() {
               {l.label}
             </NavLink>
           ))}
+          {OPERATIONS.map((item) => <a key={item.path} href={`${APP_URL}${item.path}`} className="block rounded-lg px-3 py-3 text-sm font-medium text-tide-700">{item.label}</a>)}
+          <a href={`${APP_URL}/login`} className="block rounded-lg border border-saffron-200 bg-saffron-50 px-3 py-3 text-sm font-semibold text-saffron-800">
+            Sign in / Admin access
+          </a>
         </nav>
       )}
     </header>
@@ -105,8 +128,8 @@ export function Footer() {
             <Logo />
             <p className="mt-3 max-w-md text-sm leading-relaxed text-tide-600">
               AI civic complaint triage for Brihanmumbai Municipal Corporation wards —
-              client-side lexicon distilled from the BMC/Mumbai corpus, nagarsevak
-              accountability and monsoon SLA tracking. Static build: no server, no login.
+              client-side lexicon distilled from the BMC/Mumbai corpus, citizen reporting,
+              risk awareness and monsoon SLA tracking.
             </p>
           </div>
           <div className="flex gap-2 text-xs text-tide-500">
@@ -115,8 +138,8 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-8 text-xs text-tide-400">
-          Demo dataset for representative rows · Real ward/zone structure of MCGM ·
-          The full-stack ML app lives in the main repository.
+          Public citizen experience · Real ward/zone structure of MCGM ·
+          Administration and OAuth are handled by the full-stack operations app.
         </p>
       </div>
     </footer>
