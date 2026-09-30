@@ -100,6 +100,28 @@ open ──officer/auto──▶ assigned ──crew──▶ resolved(proof) �
 
 ## Development
 
+### One-command local demo
+
+Install Docker Desktop, then run one of these commands from the repository root:
+
+```bash
+sh ./scripts/start-local.sh
+# or on Windows PowerShell:
+./scripts/start-local.ps1
+```
+
+This starts local Postgres, trains/serves the ML service, starts the Next.js
+dashboard, seeds complaint/worker data, and enables the local presentation
+administrator at `http://localhost:3000/admin`. No API keys, OAuth secrets, or
+cloud database are required. Check both directions with:
+
+```bash
+sh ./scripts/check-local.sh
+```
+
+The local stack uses free OpenStreetMap tiles and Open-Meteo where weather is
+needed. External adapters remain optional.
+
 ```bash
 bun install
 sh ./scripts/setup-ml.sh   # venv + Python deps + train if needed

@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "sh ./scripts/start-dev.sh",
+    "local": "sh ./scripts/start-local.sh",
+    "local:check": "sh ./scripts/check-local.sh",
     "dev:web": "next dev -H 0.0.0.0",
     "dev:ml": "sh ./scripts/start-ml.sh",
     "setup:ml": "sh ./scripts/setup-ml.sh",

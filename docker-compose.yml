@@ -1,5 +1,3 @@
-version: "3.9"
-
 # CivicLens — full stack with one command:
 #   DATABASE_URL=postgres://civic:civic@db:5432/civic docker compose up --build
 #
@@ -46,6 +44,8 @@ services:
     environment:
       DATABASE_URL: postgres://civic:civic@db:5432/civic
       ML_SERVICE_URL: http://ml:8008
+      LOCAL_ADMIN_MODE: "true"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
       PORT: "3000"
     depends_on:
       db:

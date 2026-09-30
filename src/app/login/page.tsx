@@ -14,10 +14,14 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
         {searchParams.error && (
           <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">Sign-in failed: {searchParams.error}</p>
         )}
-        <a href="/api/auth/google" className="mt-8 flex min-h-touch items-center justify-center gap-3 rounded-xl bg-civic-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-civic-800">
+        {process.env.LOCAL_ADMIN_MODE === "true" ? (
+          <Link href="/admin" className="mt-8 flex min-h-touch items-center justify-center rounded-xl bg-civic-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-civic-800">
+            Continue as local administrator
+          </Link>
+        ) : <a href="/api/auth/google" className="mt-8 flex min-h-touch items-center justify-center gap-3 rounded-xl bg-civic-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-civic-800">
           <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-civic-950">G</span>
           Continue with Google
-        </a>
+        </a>}
         <Link href="/" className="mt-6 block text-center text-xs font-semibold text-civic-700 hover:underline">Return to dashboard</Link>
       </section>
     </main>

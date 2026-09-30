@@ -17,7 +17,7 @@ COPY ml/ .
 
 # Train everything on build so the image ships with ready models.
 # (Weights.json is copied into the web image at build time by the Dockerfile.)
-RUN python ml/train.py && python ml/train_nn.py && python ml/train_cnn.py && python ml/export_cnn_ts.py
+RUN python train.py && python train_nn.py && python train_cnn.py && python export_cnn_ts.py
 
 ENV ML_PORT=8008
 EXPOSE 8008
