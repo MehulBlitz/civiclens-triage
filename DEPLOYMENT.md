@@ -25,6 +25,11 @@ layer intentionally degrades to the in-process lexical engine there —
    - `DATABASE_URL` — Neon Postgres connection string
    - `UPLOADTHING_SECRET`, `UPLOADTHING_APP_ID` — image evidence uploads
    - optional: `ML_SERVICE_URL`, `CIVIC_NEWS_FEEDS`, `WHATSAPP_VERIFY_TOKEN`
+   - `NEXT_PUBLIC_APP_URL` — public server URL used for OAuth redirects
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth credentials
+   - `GOOGLE_REDIRECT_URI` — optional override; defaults to
+     `${NEXT_PUBLIC_APP_URL}/api/auth/google/callback`
+   - `ADMIN_EMAILS` — comma-separated Google emails allowed into the admin workspace
 
 > The production builder is Node.js-only: Python/venv and the trained model
 > files are not present there. By design the triage pipeline degrades

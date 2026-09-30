@@ -4,14 +4,13 @@ import { useReveal, revealDelay } from "../lib/reveal";
 import { Reveal, SectionHead, Chip, Meter } from "../components/Reveal";
 import { useTickets } from "../state";
 import { slaState } from "../lib/tickets";
-import { NAGARSEVAKS, escalationUrl } from "../lib/wards";
 
 const STEPS = ["Filed", "Assigned to crew", "Work in progress", "Resolution proof", "Verified"];
 
 export default function Track() {
   useReveal();
   const params = useParams();
-  const { tickets, cosign, advance } = useTickets();
+  const { tickets, cosign } = useTickets();
   const [q, setQ] = useState((params.id ?? "").replace(/\D/g, ""));
 
   const found = useMemo(() => {
@@ -47,7 +46,7 @@ export default function Track() {
       </Reveal>
 
       {found ? (
-        <TicketCard t={found} onCosign={() => cosign(found.id)} onAdvance={() => advance(found.id)} />
+        <TicketCard t={found} onCosign={() => cosign(found.id)} />
       ) : (
         <Reveal className="mt-6">
           <p className="text-sm font-medium text-tide-600">
@@ -78,15 +77,12 @@ export default function Track() {
 function TicketCard({
   t,
   onCosign,
-  onAdvance,
 }: {
   t: ReturnType<typeof useTickets>["tickets"][number];
   onCosign: () => void;
-  onAdvance: () => void;
 }) {
   const sla = slaState(t);
   const stepIdx = { open: 0, assigned: 1, in_progress: 2, resolved: 3, verified: 4 }[t.status];
-  const rep = NAGARSEVAKS.find((n) => n.ward === t.ward);
 
   return (
     <Reveal className="well mt-6 p-6">
@@ -153,17 +149,7 @@ function TicketCard({
         <button onClick={onCosign} className="min-h-touch rounded-lg bg-saffron-500 px-4 py-2 text-sm font-semibold text-tide-950 hover:bg-saffron-600">
           Co-sign ({t.cosigns}){t.cosigns >= 5 ? " · escalated" : ""}
         </button>
-        <button onClick={onAdvance} className="min-h-touch rounded-lg border border-tide-300 px-4 py-2 text-sm font-semibold text-tide-800 hover:bg-tide-50" title="Demo: simulate the ward crew/officer">
-          Advance status (demo)
-        </button>
-        {rep && (
-          <a href={escalationUrl(rep, 1000 + t.id)} target="_blank" rel="noreferrer" className="min-h-touch rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-            WhatsApp {rep.name.split(" ")[0]}
-          </a>
-        )}
-        <Link to="/nagarsevak" className="text-sm font-medium text-tide-500 hover:text-tide-800">
-          Ward directory →
-        </Link>
+        <Link to="/report" className="text-sm font-medium text-tide-500 hover:text-tide-800">Report another issue →</Link>
       </div>
       {t.cosigns >= 5 && (
         <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">

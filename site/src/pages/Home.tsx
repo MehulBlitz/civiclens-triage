@@ -5,8 +5,8 @@ import { useReveal, revealDelay } from "../lib/reveal";
 import { heroWaves, countTo } from "../lib/anime";
 import { Reveal, SectionHead, Meter, Chip } from "../components/Reveal";
 import { useTickets } from "../state";
-import { NAGARSEVAKS } from "../lib/wards";
-import { LEXICON_METRICS } from "../lib/triage";
+import { WARDS } from "../lib/wards";
+import { LEXICON_METRICS, slaHoursFor } from "../lib/triage";
 
 const TICKER = [
   "IMD: heavy showers expected in Konkan belt over next 48h",
@@ -25,9 +25,14 @@ const FEATURES = [
     tag: "Client-side triage",
   },
   {
-    title: "Nagarsevak accountability",
-    body: "Every ward corporator row carries response hours, SLA compliance and an open-complaint pool. One tap escalates to WhatsApp with a prefilled follow-up — pressure you can send, not just read.",
-    tag: "Ward governance",
+    title: "Citizen-first ward intelligence",
+    body: "Every report is tied to a neutral ward, department, SLA and evidence trail. Citizens can see what is happening and what needs attention next.",
+    tag: "Citizen management",
+  },
+  {
+    title: "Live map and risk engine",
+    body: "Explore geocoded complaints, spatial clusters, flood signals and neural risk scores in the full operations app. The map shows where attention is needed; the risk engine explains why.",
+    tag: "City intelligence",
   },
   {
     title: "Monsoon-first SLA clocks",
@@ -66,7 +71,9 @@ export default function Home() {
       duration: 1200,
       easing: "easeOutExpo",
     });
-    statRefs.current.forEach((el, i) => countTo(el, [tickets.length * 137 + 412, NAGARSEVAKS.length * 97 + 3, 91, 24][i] ?? 0, 1500));
+    const representedWards = new Set(tickets.map((ticket) => ticket.ward)).size;
+    const categoryAccuracy = Math.round((LEXICON_METRICS.categoryAccuracy ?? 0) * 100);
+    statRefs.current.forEach((el, i) => countTo(el, [tickets.length, representedWards || WARDS.length, categoryAccuracy, slaHoursFor("Sewage", "urgent")][i] ?? 0, 1500));
   }, [tickets.length]);
 
   const open = tickets.filter((t) => t.status !== "verified").length;
@@ -91,8 +98,8 @@ export default function Home() {
           </h1>
           <p className="hero-line mt-6 max-w-2xl text-lg text-tide-200">
             CivicLens classifies, prioritizes and routes citizen complaints with a
-            BMC/Mumbai-trained lexicon that runs entirely in your browser — plus a
-            nagarsevak directory that turns ward accountability into one-tap escalation.
+            BMC/Mumbai-trained lexicon that runs entirely in your browser — with a
+            neutral ward workflow, live map, risk engine and transparent citizen ledger.
           </p>
           <div className="hero-line mt-9 flex flex-wrap gap-3">
             <Link
@@ -102,19 +109,19 @@ export default function Home() {
               Report an issue
             </Link>
             <Link
-              to="/nagarsevak"
+              to="/track"
               className="min-h-touch rounded-xl border border-tide-400/60 px-6 py-3 font-semibold text-tide-100 transition-colors hover:bg-tide-800"
             >
-              Find your nagarsevak
+              Track a report
             </Link>
           </div>
 
           <div className="hero-line mt-14 grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
-              { label: "complaints triaged (demo)", v: 0 },
-              { label: "wards mapped", v: 1 },
+              { label: "complaints in the live queue", v: 0 },
+              { label: "wards represented in reports", v: 1 },
               { label: "category accuracy on held-out BMC slice", v: 2, suffix: "%" },
-              { label: "h sewage SLA (hours)", v: 3 },
+              { label: "sewage SLA (hours)", v: 3 },
             ].map((s, i) => (
               <div key={s.label}>
                 <div className="font-display text-3xl font-semibold text-tide-50 md:text-4xl">
@@ -216,7 +223,7 @@ export default function Home() {
           <Link to="/track" className="rounded-xl bg-tide-950 px-5 py-2.5 text-sm font-semibold text-tide-50 hover:bg-tide-800">
             Track a ticket
           </Link>
-          <span className="text-sm text-tide-500">{open} open in the demo ward · {tickets.length} total</span>
+          <span className="text-sm text-tide-500">{open} open reports · {tickets.length} total reports</span>
         </Reveal>
       </section>
 

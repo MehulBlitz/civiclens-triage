@@ -3,7 +3,7 @@ import {
   type NeonQueryFunction
 } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { complaints, workers, karmaLedger } from "./schema";
+import { complaints, workers, karmaLedger, users, sessions, wards } from "./schema";
 
 export class DbUnavailableError extends Error {}
 
@@ -22,7 +22,7 @@ function createDb(): DbHandle {
     );
   }
   const client = neon(url);
-  const db = drizzle(client, { schema: { complaints, workers, karmaLedger } });
+  const db = drizzle(client, { schema: { complaints, workers, karmaLedger, users, sessions, wards } });
   return { client, db };
 }
 
@@ -90,6 +90,28 @@ const MIGRATIONS = [
     zone text,
     tasks_done integer NOT NULL DEFAULT 0,
     rating double precision NOT NULL DEFAULT 4.5
+  )`,
+  `CREATE TABLE IF NOT EXISTS users (
+    id serial PRIMARY KEY,
+    email text NOT NULL UNIQUE,
+    name text,
+    avatar_url text,
+    provider text NOT NULL DEFAULT 'google',
+    role text NOT NULL DEFAULT 'citizen',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_login_at timestamptz
+  )`,
+  `CREATE TABLE IF NOT EXISTS sessions (
+    token text PRIMARY KEY,
+    user_id integer NOT NULL,
+    expires_at timestamptz NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS wards (
+    id serial PRIMARY KEY,
+    code text NOT NULL UNIQUE,
+    name text NOT NULL,
+    zone text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
   )`,
   `CREATE TABLE IF NOT EXISTS karma_ledger (
     id serial PRIMARY KEY,

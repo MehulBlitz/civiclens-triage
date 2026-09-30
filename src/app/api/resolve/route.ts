@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { bootstrapDb, getDb, DbUnavailableError } from "@/lib/db";
 import { complaints, workers } from "@/lib/schema";
 import { awardKarma } from "@/lib/karma";
+import { requireAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ export const dynamic = "force-dynamic";
  * supplied photo evidence at intake.
  */
 export async function POST(req: Request) {
+  const auth = await requireAdmin();
+  if (!auth.user) return NextResponse.json({ error: "Administrator sign-in required" }, { status: auth.status });
   let body: {
     complaintId?: unknown;
     resolvedPhotoUrl?: unknown;

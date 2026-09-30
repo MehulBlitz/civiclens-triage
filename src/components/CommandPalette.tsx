@@ -21,7 +21,6 @@ const NAV_TARGETS = [
   { href: "/radar", label: "Monsoon & flood radar" },
   { href: "/insights", label: "Insights & analytics" },
   { href: "/karma", label: "Civic Karma leaderboard" },
-  { href: "/representatives", label: "My ward representative" },
   { href: "/worker", label: "Field crew portal" },
   { href: "/officer", label: "Ward officer portal" },
   { href: "/track", label: "Track a ticket" },

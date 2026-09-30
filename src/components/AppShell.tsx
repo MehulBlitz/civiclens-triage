@@ -113,12 +113,25 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: "/admin",
+    label: "Admin",
+    short: "Admin",
+    hint: "Ward administration and lifecycle controls",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 4 6.5V11c0 5 3.4 8.4 8 9.5 4.6-1.1 8-4.5 8-9.5V6.5L12 3Z" />
+        <path strokeLinecap="round" d="M9 12h6M12 9v6" />
+      </svg>
+    ),
+  },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { stats, refreshing, refresh } = useCivic();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -132,6 +145,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data: { user?: { email: string; role: string } | null }) => setUser(data.user ?? null))
+      .catch(() => setUser(null));
   }, []);
 
   return (
@@ -266,6 +286,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 ⤓ Export CSV
               </a>
+              <Link
+                href={user?.role === "admin" ? "/admin" : "/login"}
+                className="rounded-full border border-white/20 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-white/10"
+              >
+                {user?.role === "admin" ? "Admin workspace" : user ? user.email : "Citizen sign in"}
+              </Link>
             </div>
           </div>
 
@@ -337,7 +363,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         CivicLens · three-layer fallback triage (ML model → lexical rules →
         manual review) · Civic Incident NN risk engine · 3D digital twin ·
         WhatsApp / X / News channels · Leaflet + OpenStreetMap + Nominatim ·
-        Postgres via Neon · hackathon demo, no login required.
+        Postgres via Neon · citizen sign-in · role-gated administration.
       </footer>
     </div>
   );

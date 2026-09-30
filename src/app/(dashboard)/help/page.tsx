@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "How do I get a field crew dispatched faster?",
-    a: "Attach a photo (evidence raises trust and priority), share a precise location (GPS or landmark), and encourage neighbors to co-sign the complaint — five co-signatures auto-escalate the priority. You can also escalate to your ward corporator via WhatsApp from the Representatives page."
+    a: "Attach a photo (evidence raises trust and priority), share a precise location (GPS or landmark), and encourage neighbors to co-sign the complaint — five co-signatures auto-escalate the priority."
   },
   {
     q: "What is Civic Karma and how do I earn it?",
@@ -42,7 +42,6 @@ const QUICK_LINKS = [
   { href: "/quick", label: "Snap & Send report", icon: "⚡", hint: "10-second intake" },
   { href: "/track", label: "Track a ticket", icon: "🔍", hint: "no login needed" },
   { href: "/karma", label: "Civic Karma", icon: "🌟", hint: "earn & redeem" },
-  { href: "/representatives", label: "My representative", icon: "🏛", hint: "escalate via WhatsApp" }
 ];
 
 export default function HelpPage() {

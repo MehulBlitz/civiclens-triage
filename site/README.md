@@ -1,6 +1,6 @@
 # CivicLens React UI — the GitHub Pages build
 
-A standalone **Vite + React 18 + Tailwind 3** website: the nagarsevak /
+A standalone **Vite + React 18 + Tailwind 3** citizen website:
 ward-governance experience of CivicLens, restyled with an **Anime.js + scroll-tide**
 visual language (ScrollTide-style reveals, animated wave hero, count-ups) that is
 deliberately **different from the main dashboard's** instrument look.
@@ -39,8 +39,6 @@ bun run typecheck
 | Route | What it does |
 |---|---|
 | `/` | Anime.js wave hero, live BMC ticker, 3-layer pipeline explainer, demo queue |
-| `/nagarsevak` | Corporator directory — search, zone filter, SLA/response metrics, WhatsApp escalation |
-| `/nagarsevak/:id` | Ward profile — live ward queue, accountability meters, escalation explainer |
 | `/report` | Snap & Send — live client-side triage preview (category/priority/department/signals) + photo check |
 | `/track` | Public lifecycle stepper + SLA clock + co-sign (escalates at 5) |
 | `/karma` | Civic Karma wallet, tiers, leaderboard |
@@ -50,8 +48,8 @@ without 404 rewrites.
 
 ## Data & honesty notes
 
-- Ward/zone structure mirrors the real MCGM ward map; representative rows are
-  clearly-marked demo data.
+- Ward/zone structure mirrors the real MCGM ward map and is used only for neutral
+  routing, locality context, and analytics.
 - The lexicon JSON embeds **held-out accuracy measured on the BMC corpus**
   (see `metrics` inside the JSON) — the site displays that number, not a
   invented one.
