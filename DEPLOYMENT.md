@@ -210,3 +210,23 @@ bun run ios:build       # local unsigned archive (macOS only)
 
 Native projects live in `android/` and `ios/` and are committed (sources
 only — build outputs are ignored).
+
+## 8. Streamlit ML deployment
+
+The repository includes `streamlit_app.py` for Streamlit Community Cloud or
+another Python host. It runs the trained SVM triage model, displays model
+priority/category output, plots submitted coordinates on an OpenStreetMap
+backdrop, and calculates risk and queue insights.
+
+Set the Streamlit app entrypoint to `streamlit_app.py`, use the repository root
+as the working directory, and install `requirements.txt`. The ignored model
+bundle must be generated or provided before launch:
+
+```bash
+python ml/train.py
+streamlit run streamlit_app.py
+```
+
+GitHub Pages cannot run Streamlit, Python, OAuth callbacks, Neon, or Next API
+routes. Use the Streamlit URL for the ML dashboard and the Next deployment for
+authenticated administration; the Pages site remains the public citizen UI.
