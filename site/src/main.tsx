@@ -10,6 +10,8 @@ const Home = React.lazy(() => import("./pages/Home"));
 const Report = React.lazy(() => import("./pages/Report"));
 const Track = React.lazy(() => import("./pages/Track"));
 const Karma = React.lazy(() => import("./pages/Karma"));
+const Operations = React.lazy(() => import("./pages/Operations"));
+const SignIn = React.lazy(() => import("./pages/SignIn"));
 
 function App() {
   useReveal();
@@ -32,6 +34,11 @@ function App() {
                 <Route path="/track" element={<Track />} />
                 <Route path="/track/:id" element={<Track />} />
                 <Route path="/karma" element={<Karma />} />
+                <Route path="/map" element={<Operations mode="map" />} />
+                <Route path="/risk" element={<Operations mode="risk" />} />
+                <Route path="/insights" element={<Operations mode="insights" />} />
+                <Route path="/channels" element={<Operations mode="channels" />} />
+                <Route path="/sign-in" element={<SignIn />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </React.Suspense>
