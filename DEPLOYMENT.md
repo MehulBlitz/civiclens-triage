@@ -51,6 +51,10 @@ Otherwise hosting's Git integration deploys automatically on push to `main`.
 Connected: **github.com/MehulBlitz/civiclens-triage** (private). Pushes use a
 repo-scoped PAT exposed to the app as `GITHUB_TOKEN` (Keys/Environment) via
 `sh ./scripts/github-connect.sh` — re-run it any time to push new work.
+For routine pushes, `node scripts/ship-main.cjs --all --file MSG.txt` stages,
+commits and pushes `main` (falling back to a dated branch + PR if `main` is
+protected); the token is fed to git through an ephemeral credential helper
+and never printed or persisted.
 
 All CI workflows install with **Bun** (`oven-sh/setup-bun` +
 `bun install --frozen-lockfile`) to match `bun.lock`; npm cache/ci steps were
