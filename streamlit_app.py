@@ -1,6 +1,9 @@
 """Streamlit deployment for the CivicLens ML triage and map workflow."""
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,7 +20,7 @@ st.set_page_config(page_title="CivicLens ML Triage", page_icon="🏙️", layout
 
 
 def predict_text(text: str) -> dict:
-    bundle = load_bundle()
+    bundle = get_bundle()
     word = bundle["word_tfidf"].transform([text])
     char = bundle["char_tfidf"].transform([text])
     matrix = hstack([word, char, extract_features([text])]).tocsr()
@@ -30,6 +33,27 @@ def predict_text(text: str) -> dict:
         "priority": str(bundle["priority_head"].classes_[priority_index]),
         "confidence": round(float(min(1, 0.7 * cat_probs[cat_index] + 0.3 * priority_probs[priority_index])), 3),
     }
+
+
+@st.cache_resource(show_spinner="Preparing the CivicLens model...")
+def get_bundle():
+    """Load the committed bundle, or train a compact bundle on first deploy."""
+    try:
+        return load_bundle()
+    except FileNotFoundError:
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "ml" / "train.py"),
+                "--per-category", "100",
+                "--noise", "20",
+                "--real-per-source", os.getenv("CIVICLENS_REAL_PER_SOURCE", "0"),
+            ],
+            cwd=ROOT,
+            check=True,
+            timeout=600,
+        )
+        return load_bundle()
 
 
 def ensure_state() -> list[dict]:
@@ -70,8 +94,8 @@ if submit:
                 "has_photo": bool(evidence),
             })
             st.success(f"Report #{len(reports)} triaged as {result['category']} / {result['priority']}.")
-        except FileNotFoundError as error:
-            st.error("The trained model bundle is missing. Run `python ml/train.py` before deploying Streamlit.")
+        except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            st.error("The model could not be prepared on this deployment. Check the Streamlit logs for the training error.")
             st.exception(error)
 
 if not reports:
