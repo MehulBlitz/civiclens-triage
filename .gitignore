@@ -50,3 +50,6 @@ tsconfig.tsbuildinfo
 .vly-run/
 isolate/
 .vercel/
+
+# build handoff artifact (canonical copy lives in public/civiclens-react-ui.zip)
+/civiclens-react-ui.zip

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import random
+from collections import Counter
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent / "data" / "complaints.csv"
@@ -486,6 +487,31 @@ def build_dataset_from_sources(
     except Exception as e:  # noqa: BLE001 — offline training must still work
         print(f"[generate_dataset] real datasets unavailable ({e}) — synthetic only")
         stats["real_total"] = 0
+
+    # BMC/Mumbai corpus (ml/bmc_data.py) — merged when the CSV has been built
+    # (sh ./scripts/train-bmc.sh step 1). This is what city-specializes the
+    # triage SVM for the BMC hackathon.
+    bmc_path = Path(__file__).resolve().parent / "data" / "bmc_complaints.csv"
+    if bmc_path.exists():
+        bmc: list[dict] = []
+        with bmc_path.open(encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                bmc.append({
+                    "text": r["text"],
+                    "category": r["category"],
+                    "priority": r["priority"],
+                    "source_dataset": r.get("source_dataset", "bmc"),
+                })
+        stats["bmc_total"] = len(bmc)
+        stats["bmc_by_source"] = dict(
+            Counter(r["source_dataset"] for r in bmc)
+        )
+        rows.extend(bmc)
+        random.Random(seed + 2).shuffle(rows)
+    else:
+        stats["bmc_total"] = 0
+        print("[generate_dataset] bmc_complaints.csv not found — run: "
+              "python3 ml/bmc_data.py --build")
     return rows, stats
 
 

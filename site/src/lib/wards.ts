@@ -1,0 +1,135 @@
+/**
+ * Brihanmumbai Municipal Corporation ward + nagarsevak (corporator) dataset.
+ *
+ * Structure mirrors the real BMC ward committee system (lettered wards, 3
+ * zones) with clearly-marked DEMO representative rows — names/phones are
+ * placeholders for the hackathon build; the ward/zone scaffolding is real so
+ * judges can see the escalation graph end-to-end.
+ *
+ * Accountability metrics drive the directory UI the way the smart-civic-pi
+ * "nagarsevak" experience does — but with our own tide/saffron visual system.
+ */
+
+export type Nagarsevak = {
+  id: number;
+  name: string;
+  ward: string;
+  wardName: string;
+  zone: string;
+  party: string;
+  designation: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  office: string;
+  term: string;
+  // accountability ledger
+  complaintsResolved: number;
+  complaintsOpen: number;
+  avgResponseHours: number;
+  slaCompliance: number; // 0-1
+  responseRate: number; // 0-1
+};
+
+export const WARDS: { code: string; name: string; zone: string }[] = [
+  { code: "A", name: "Colaba–Churchgate", zone: "City" },
+  { code: "C", name: "Marine Lines–Malabar Hill", zone: "City" },
+  { code: "F North", name: "Matunga–Sion", zone: "City" },
+  { code: "G North", name: "Dadar–Mahim", zone: "City" },
+  { code: "H East", name: "Bandra East–Khar", zone: "Western Suburbs" },
+  { code: "K West", name: "Andheri West–Juhu", zone: "Western Suburbs" },
+  { code: "K East", name: "Andheri East–Marol", zone: "Western Suburbs" },
+  { code: "P North", name: "Malad–Dahisar", zone: "Western Suburbs" },
+  { code: "R Central", name: "Borivali–Kandivali", zone: "Western Suburbs" },
+  { code: "N", name: "Ghatkopar–Vikhroli", zone: "Eastern Suburbs" },
+  { code: "L", name: "Kurla–Sakinaka", zone: "Eastern Suburbs" },
+  { code: "M West", name: "Chembur", zone: "Eastern Suburbs" },
+  { code: "M East", name: "Govandi–Mankhurd", zone: "Eastern Suburbs" },
+  { code: "S", name: "Bhandup–Vikhroli Parksite", zone: "Eastern Suburbs" },
+  { code: "T", name: "Mulund", zone: "Eastern Suburbs" },
+];
+
+export const NAGARSEVAKS: Nagarsevak[] = [
+  {
+    id: 1, name: "Adv. Sunita Sawant", ward: "K West", wardName: "Andheri West–Juhu", zone: "Western Suburbs",
+    party: "Ward Janata", designation: "Ward Corporator",
+    phone: "+91-22-2630-0101", whatsapp: "912226300101",
+    email: "kwest.ward@mcgm.gov.in", office: "Ward Office, Versova Road, Andheri West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 712, complaintsOpen: 58, avgResponseHours: 9.4, slaCompliance: 0.91, responseRate: 0.96,
+  },
+  {
+    id: 2, name: "Vinod Shetty", ward: "R Central", wardName: "Borivali–Kandivali", zone: "Western Suburbs",
+    party: "Coastal Alliance", designation: "Ward Corporator",
+    phone: "+91-22-2890-0102", whatsapp: "912228900102",
+    email: "rcentral.ward@mcgm.gov.in", office: "Ward Office, S V Road, Borivali West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 655, complaintsOpen: 71, avgResponseHours: 12.1, slaCompliance: 0.86, responseRate: 0.93,
+  },
+  {
+    id: 3, name: "Fatima Qureshi", ward: "H East", wardName: "Bandra East–Khar", zone: "Western Suburbs",
+    party: "Independent", designation: "Ward Corporator",
+    phone: "+91-22-2640-0103", whatsapp: "912226400103",
+    email: "heast.ward@mcgm.gov.in", office: "Ward Office, Bandra East Road, near ST Depot", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 598, complaintsOpen: 44, avgResponseHours: 8.2, slaCompliance: 0.94, responseRate: 0.97,
+  },
+  {
+    id: 4, name: "Rajesh Naidu", ward: "G North", wardName: "Dadar–Mahim", zone: "City",
+    party: "Ward Janata", designation: "Ward Corporator",
+    phone: "+91-22-2430-0104", whatsapp: "912224300104",
+    email: "gnorth.ward@mcgm.gov.in", office: "Ward Office, Ranade Road, Dadar West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 701, complaintsOpen: 39, avgResponseHours: 7.6, slaCompliance: 0.95, responseRate: 0.98,
+  },
+  {
+    id: 5, name: "Prakash Jadhav", ward: "M East", wardName: "Govandi–Mankhurd", zone: "Eastern Suburbs",
+    party: "Coastal Alliance", designation: "Ward Corporator",
+    phone: "+91-22-2550-0105", whatsapp: "912225500105",
+    email: "meast.ward@mcgm.gov.in", office: "Ward Office, Mankhurd Road, Deonar", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 412, complaintsOpen: 96, avgResponseHours: 21.8, slaCompliance: 0.68, responseRate: 0.79,
+  },
+  {
+    id: 6, name: "Meera Raut", ward: "L", wardName: "Kurla–Sakinaka", zone: "Eastern Suburbs",
+    party: "Independent", designation: "Ward Corporator",
+    phone: "+91-22-2650-0106", whatsapp: "912226500106",
+    email: "l.ward@mcgm.gov.in", office: "Ward Office, Sakinaka Junction, Kurla West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 540, complaintsOpen: 77, avgResponseHours: 16.3, slaCompliance: 0.76, responseRate: 0.85,
+  },
+  {
+    id: 7, name: "Deepak Narvekar", ward: "A", wardName: "Colaba–Churchgate", zone: "City",
+    party: "Coastal Alliance", designation: "Ward Corporator",
+    phone: "+91-22-2282-0107", whatsapp: "912228201007",
+    email: "a.ward@mcgm.gov.in", office: "Ward Office, Colaba Market Road", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 623, complaintsOpen: 41, avgResponseHours: 10.5, slaCompliance: 0.9, responseRate: 0.94,
+  },
+  {
+    id: 8, name: "Shobha Kamble", ward: "N", wardName: "Ghatkopar–Vikhroli", zone: "Eastern Suburbs",
+    party: "Ward Janata", designation: "Ward Corporator",
+    phone: "+91-22-2510-0108", whatsapp: "912225100108",
+    email: "n.ward@mcgm.gov.in", office: "Ward Office, LBS Marg, Vikhroli West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 577, complaintsOpen: 52, avgResponseHours: 11.2, slaCompliance: 0.88, responseRate: 0.92,
+  },
+  {
+    id: 9, name: "Iqbal Shaikh", ward: "P North", wardName: "Malad–Dahisar", zone: "Western Suburbs",
+    party: "Independent", designation: "Ward Corporator",
+    phone: "+91-22-2880-0109", whatsapp: "912228801009",
+    email: "pnorth.ward@mcgm.gov.in", office: "Ward Office, Link Road, Malad West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 489, complaintsOpen: 63, avgResponseHours: 14.9, slaCompliance: 0.81, responseRate: 0.88,
+  },
+  {
+    id: 10, name: "Anita Deshmukh", ward: "S", wardName: "Bhandup–Vikhroli Parksite", zone: "Eastern Suburbs",
+    party: "Coastal Alliance", designation: "Ward Corporator",
+    phone: "+91-22-2570-0110", whatsapp: "912225700110",
+    email: "s.ward@mcgm.gov.in", office: "Ward Office, Nahur Road, Bhandup West", term: "2022–27 (Administrator-era)",
+    complaintsResolved: 531, complaintsOpen: 48, avgResponseHours: 12.7, slaCompliance: 0.85, responseRate: 0.9,
+  },
+];
+
+/** WhatsApp deep-link with a prefilled escalation template. */
+export function escalationUrl(rep: Nagarsevak, ticketId?: number): string {
+  const text = ticketId
+    ? `Namaste ${rep.name}, I am following up on CivicLens ticket #${ticketId} in Ward ${rep.ward}. Kindly help expedite the resolution. — Sent via CivicLens Mumbai`
+    : `Namaste ${rep.name}, I am a resident of Ward ${rep.ward} (${rep.wardName}). I would like to raise a civic issue. — Sent via CivicLens Mumbai`;
+  return `https://wa.me/${rep.whatsapp}?text=${encodeURIComponent(text)}`;
+}
+
+export function zoneList(): string[] {
+  return [...new Set(NAGARSEVAKS.map((n) => n.zone))];
+}

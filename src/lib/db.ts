@@ -3,7 +3,7 @@ import {
   type NeonQueryFunction
 } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { complaints } from "./schema";
+import { complaints, workers, karmaLedger } from "./schema";
 
 export class DbUnavailableError extends Error {}
 
@@ -22,7 +22,7 @@ function createDb(): DbHandle {
     );
   }
   const client = neon(url);
-  const db = drizzle(client, { schema: { complaints } });
+  const db = drizzle(client, { schema: { complaints, workers, karmaLedger } });
   return { client, db };
 }
 
@@ -69,7 +69,36 @@ const MIGRATIONS = [
   `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS image_phash text`,
   `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS cnn_category text`,
   `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS cnn_severity double precision`,
-  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS vision_source text`
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS vision_source text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS reporter_name text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_worker_id integer`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_worker_name text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_at timestamptz`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolved_photo_url text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolved_notes text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolved_at timestamptz`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS verified boolean NOT NULL DEFAULT false`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS verified_at timestamptz`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS verified_by text`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS karma_awarded integer NOT NULL DEFAULT 0`,
+  `ALTER TABLE complaints ADD COLUMN IF NOT EXISTS cosign_count integer NOT NULL DEFAULT 1`,
+  `CREATE TABLE IF NOT EXISTS workers (
+    id serial PRIMARY KEY,
+    name text NOT NULL,
+    department text NOT NULL,
+    phone text,
+    zone text,
+    tasks_done integer NOT NULL DEFAULT 0,
+    rating double precision NOT NULL DEFAULT 4.5
+  )`,
+  `CREATE TABLE IF NOT EXISTS karma_ledger (
+    id serial PRIMARY KEY,
+    citizen text NOT NULL,
+    action text NOT NULL,
+    points integer NOT NULL,
+    complaint_id integer,
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`
 ];
 
 /** Additive migrations — safe to run on every boot. */
@@ -99,10 +128,23 @@ export async function seedIfEmpty(): Promise<void> {
     .select({ id: complaints.id })
     .from(complaints)
     .limit(1);
-  if (existing.length > 0) return;
-  const { SEED_ROWS } = await import("./seed");
-  await db.insert(complaints).values(SEED_ROWS).onConflictDoNothing({ target: complaints.id });
-  await client(SYNC_SEQUENCE);
+  if (existing.length === 0) {
+    const { SEED_ROWS } = await import("./seed");
+    await db.insert(complaints).values(SEED_ROWS).onConflictDoNothing({ target: complaints.id });
+    await client(SYNC_SEQUENCE);
+  }
+  // Crew + karma seed independently — they back the worker/officer/karma
+  // pages even on databases that already carry complaint data.
+  const workerRows = await db.select({ id: workers.id }).from(workers).limit(1);
+  if (workerRows.length === 0) {
+    const { SEED_WORKERS } = await import("./seed");
+    await db.insert(workers).values(SEED_WORKERS).onConflictDoNothing();
+  }
+  const karmaRows = await db.select({ id: karmaLedger.id }).from(karmaLedger).limit(1);
+  if (karmaRows.length === 0) {
+    const { SEED_KARMA } = await import("./seed");
+    await db.insert(karmaLedger).values(SEED_KARMA).onConflictDoNothing();
+  }
 }
 
 /** Idempotent bootstrap: table exists + migrations + demo data present. */

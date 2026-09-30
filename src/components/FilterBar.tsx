@@ -99,7 +99,7 @@ export default function FilterBar() {
         <Select
           label="Status"
           value={filters.status}
-          options={["open", "in_progress", "resolved", "needs_review"]}
+          options={["open", "assigned", "in_progress", "resolved", "needs_review"]}
           onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
         />
         <Select

@@ -31,6 +31,40 @@ export default function IngestPanel({ onTriaged }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<"en-IN" | "hi-IN" | "kn-IN">("en-IN");
+
+  type SpeechCtor = new () => {
+    lang: string;
+    interimResults: boolean;
+    continuous: boolean;
+    onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+    onerror: ((e: unknown) => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+  };
+
+  const startVoice = () => {
+    const w = window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor };
+    const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+    if (!Ctor) {
+      setError("Voice input needs Chrome/Edge (Web Speech API) — or type instead.");
+      return;
+    }
+    const rec = new Ctor();
+    rec.lang = voiceLang;
+    rec.interimResults = false;
+    rec.continuous = false;
+    rec.onresult = (e) => {
+      const transcript = e.results[0]?.[0]?.transcript ?? "";
+      setText((t) => (t ? `${t} ${transcript}` : transcript));
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    setListening(true);
+    rec.start();
+  };
 
   const submit = async () => {
     const trimmed = text.trim();
@@ -132,6 +166,35 @@ export default function IngestPanel({ onTriaged }: Props) {
               ? "Raw messages (separate each with a blank line)"
               : "Raw complaint text"}
           </label>
+          {!bulk && (
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {(["en-IN", "hi-IN", "kn-IN"] as const).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setVoiceLang(l)}
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold transition ${
+                    voiceLang === l
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-[color:var(--line-strong)] bg-white text-ink-500"
+                  }`}
+                >
+                  {l === "en-IN" ? "English" : l === "hi-IN" ? "हिंदी" : "ಕನ್ನಡ"}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={startVoice}
+                className={`min-h-touch ml-auto rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${
+                  listening
+                    ? "border-rose-400 bg-rose-50 text-rose-700 animate-pulseSoft"
+                    : "border-[color:var(--line-strong)] bg-white text-ink-700 hover:border-blue-300"
+                }`}
+              >
+                {listening ? "● Listening…" : "🎙 Speak instead"}
+              </button>
+            </div>
+          )}
           <textarea
             id="complaint-text"
             value={text}

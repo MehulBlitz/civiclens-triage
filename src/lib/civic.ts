@@ -14,11 +14,30 @@ export type Priority = (typeof PRIORITIES)[number];
 
 export const STATUSES = [
   "open",
+  "assigned",
   "in_progress",
   "resolved",
   "needs_review"
 ] as const;
 export type Status = (typeof STATUSES)[number];
+
+/** Tiers of the Civic Karma gamification ledger. */
+export type KarmaTier = { min: number; name: string; color: string };
+export const KARMA_TIERS: readonly KarmaTier[] = [
+  { min: 0, name: "Rookie Reporter", color: "text-slate-600" },
+  { min: 25, name: "Civic Volunteer", color: "text-sky-600" },
+  { min: 75, name: "Ward Guardian", color: "text-civic-700" },
+  { min: 150, name: "City Champion", color: "text-amber-600" },
+  { min: 300, name: "Civic Legend", color: "text-emerald-600" }
+];
+
+/** Points per citizen action — the karma economy. */
+export const KARMA_POINTS = {
+  report: 10,
+  photo_evidence: 5,
+  resolution_proof: 20,
+  cosign: 2
+} as const;
 
 export const DEPARTMENTS = [
   "Roads & Transport",
@@ -84,6 +103,10 @@ export const STATUS_STYLE: Record<
   { label: string; chip: string }
 > = {
   open: { label: "Open", chip: "border-slate-200 bg-slate-100 text-slate-700" },
+  assigned: {
+    label: "Assigned",
+    chip: "border-indigo-200 bg-indigo-50 text-indigo-700"
+  },
   in_progress: {
     label: "In progress",
     chip: "border-sky-200 bg-sky-50 text-sky-700"

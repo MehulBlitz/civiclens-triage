@@ -133,8 +133,7 @@ export default function MapPage() {
           </button>
 
           {/* Desktop: legend always visible; mobile: only when expanded */}
-          {(twinOpen || true) && (
-            <div className="hidden flex-wrap gap-1.5 border-b border-white/10 px-5 py-2 text-[10px] font-bold uppercase tracking-wide xl:flex">
+          <div className="hidden flex-wrap gap-1.5 border-b border-white/10 px-5 py-2 text-[10px] font-bold uppercase tracking-wide xl:flex">
               <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-slate-300">
                 ⬤ pothole crater
               </span>
@@ -151,7 +150,6 @@ export default function MapPage() {
                 ◯ ring = critical
               </span>
             </div>
-          )}
 
           <div className={twinOpen ? "px-3 pt-3 sm:px-4 sm:pt-4" : "hidden xl:block xl:px-4 xl:pt-4"}>
             <TwinWrapper
