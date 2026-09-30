@@ -15,9 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ml/ .
 
-# Train everything on build so the image ships with ready models.
-# (Weights.json is copied into the web image at build time by the Dockerfile.)
-RUN python train.py && python train_nn.py && python train_cnn.py && python export_cnn_ts.py
+# Train only the missing SVM bundle. The risk and CNN weights are already
+# versioned in ml/models and are copied with the service source.
+RUN python train.py
 
 ENV ML_PORT=8008
 EXPOSE 8008
